@@ -1,0 +1,8 @@
+{
+  "name": "deerflow-poc",
+  "description": "Proof-of-capability plugin for the DeerFlow Claude Code port planning phase",
+  "version": "0.0.1",
+  "author": {
+    "name": "port-planning-experiment"
+  }
+}

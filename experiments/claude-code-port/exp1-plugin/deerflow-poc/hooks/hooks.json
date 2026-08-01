@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '\"PRE \" + .tool_name + \" \" + (.tool_input.command // \"\")' >> /tmp/deerflow-poc-hook.log"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/deny-guard.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '\"POST \" + .tool_name' >> /tmp/deerflow-poc-hook.log"
+          }
+        ]
+      }
+    ]
+  }
+}
