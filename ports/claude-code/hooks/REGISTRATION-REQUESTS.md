@@ -374,3 +374,121 @@ M5 `Bash` env-guard block, which must be preserved):
 **Cost note for the owning lane:** entries 1-4 run once per matched tool call and entry 5 once per
 turn. All five are short-lived Node processes that read at most a handful of small JSON files; none
 calls a model, spawns a process, or touches the network.
+
+---
+
+## M13 — workspace snapshot + delivery gate (two entries)
+
+**Status:** requested (not applied)
+
+Two hooks, one feature. The `UserPromptSubmit` entry writes the pre-turn baseline; the `Stop`
+entry diffs against it, records what changed, and enforces the `outputs/` delivery contract.
+Registering only one of them is a no-op: without the baseline the gate stands down by design.
+
+**Requested entries** (add alongside the existing blocks; both arrays already exist and must be
+preserved, not replaced):
+
+```json
+"UserPromptSubmit": [
+  {
+    "matcher": "*",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "node ${CLAUDE_PLUGIN_ROOT}/dist/hooks/turn-context.js"
+      },
+      {
+        "type": "command",
+        "command": "node ${CLAUDE_PLUGIN_ROOT}/dist/hooks/turn-snapshot.js"
+      }
+    ]
+  }
+],
+"Stop": [
+  {
+    "matcher": "",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "node ${CLAUDE_PLUGIN_ROOT}/dist/hooks/memory-extract.js"
+      },
+      {
+        "type": "command",
+        "command": "node ${CLAUDE_PLUGIN_ROOT}/dist/hooks/stop-goal-evaluator.js"
+      },
+      {
+        "type": "command",
+        "command": "node ${CLAUDE_PLUGIN_ROOT}/dist/hooks/delivery-gate.js"
+      }
+    ]
+  }
+]
+```
+
+### 1. `UserPromptSubmit` / `*` → `turn-snapshot.js`
+
+- **Ports:** the pre-run workspace capture, `runtime/runs/worker.py:673-681`
+  (`capture_workspace_snapshot`), through `src/artifacts/snapshot.ts`.
+- **Matcher rationale:** `UserPromptSubmit` has no tool to match on; every prompt needs a
+  baseline, because any turn may write to `outputs/`.
+- **Ordering:** **none required against `turn-context.js`.** They share no file — this hook writes
+  only `workspace-pre.json`, that one reads `summary/delegations/skill-context/goal` and writes
+  nothing. Either order is correct.
+- **Stdout protocol:** none. It has no decision to make and tells the model nothing.
+- **Writes:** `.deerflow/state/<thread>/workspace-pre.json` only, through the atomic-write state
+  library. Unconditional overwrite (single writer, each turn supersedes the last).
+- **Failure mode:** exits 0 unconditionally. A malformed payload, an unresolvable thread id, or an
+  unwritable state directory results in no baseline — and the Stop gate then stands down rather
+  than blocking. Diagnostics go to stderr only.
+- **Cost:** one bounded filesystem walk per turn. `outputs/` in full; the project tree capped at
+  `FAST_WORKSPACE_MAX_DEPTH = 2` directory levels; the whole scan capped at the original's
+  `max_scanned_files = 2000`. `.git`, `node_modules`, `dist`, `build`, `.venv`, `__pycache__` and
+  `.deerflow` are never descended into. Files ≤ 256 KiB are sha256'd; larger, sensitive-looking and
+  symlinked entries are metadata-only.
+- **Model calls:** none.
+- **Escape hatch:** `DEERFLOW_DISABLE_DELIVERY_GATE=1` (disables entry 2 as well; one flag governs
+  both halves, as `DEERFLOW_DISABLE_READ_GATE` does for the read gate).
+- **Build dependency:** `dist/hooks/turn-snapshot.js`.
+
+### 2. `Stop` / `""` → `delivery-gate.js`
+
+- **Ports:** `workspace_changes/recorder.py:record_workspace_changes` (the post-run record) and the
+  delivery verdict of `runtime/runs/worker.py:934-986` + `_persist_delivery_receipt`
+  (1044-1113). This entry is what **restores the enforcement `docs/sandbox-contract.md` §3
+  recorded as weakened at M5.**
+- **Matcher:** `""` — a `Stop` hook has no tool to match on; the empty string means every Stop.
+- **Ordering:** **must be listed LAST, after `stop-goal-evaluator.js`** (which is itself after
+  `memory-extract.js`). Rationale: the goal evaluator decides whether the turn is really over, so
+  it must get its continuation first; the delivery check belongs on the turn that actually ends.
+  Running it earlier would block on a turn the goal loop was about to extend anyway. The three
+  hooks share no file (`memory/queue.jsonl` vs `goal.json` vs `workspace-changes.json` +
+  `run-meta.json`).
+- **Stdout protocol:** `{"decision":"block","reason":"<ported delivery-contract text + the
+  unpresented paths>"}`, emitted **only** when a baseline exists, files were created or modified
+  under `outputs/`, none of them is named in the final assistant message, and `stop_hook_active` is
+  false. Silent in every other case.
+- **Writes:** `workspace-changes.json` (one entry per turn with changes, history capped at 20,
+  identical consecutive deltas deduplicated) and the `delivery` field of `run-meta.json`
+  (put-if-absent, via `applyRunTransition` re-asserting the run's CURRENT status — it never
+  terminalizes a live run). Both through the atomic-write + `rev`-CAS library.
+- **Failure mode:** exits 0 unconditionally. A malformed payload, an unresolvable thread id, a
+  missing or corrupt baseline, an unreadable transcript, or any internal fault results in **no
+  decision at all** — the turn ends normally. Diagnostics go to stderr only.
+- **Model calls:** none. The verdict is a set comparison between the changed-outputs list and the
+  path-like tokens in the final message.
+- **Escape hatch:** `DEERFLOW_DISABLE_DELIVERY_GATE=1` (same flag as entry 1, on purpose).
+- **Build dependency:** `dist/hooks/delivery-gate.js`.
+
+**Infinite-loop safety:** a Stop hook that blocks unconditionally wedges a session. Four
+independent guards prevent that: (a) it never blocks unless files were created or modified under
+`outputs/`; (b) `stop_hook_active` true suppresses the block unconditionally — at most one block
+per stop chain, no counter required; (c) a missing baseline stands the hook down, so a fresh or
+broken state tree can never trigger it; (d) presenting the paths satisfies the verdict on the very
+next evaluation. Pinned by `src/hooks/delivery-gate.test.ts` ("never double-blocks…",
+"terminates: one block, then the continuation turn cannot block again").
+
+**Interaction with `stop-goal-evaluator.js`:** both can emit a block. When the goal evaluator
+blocks first, the continuation turn carries `stop_hook_active: true`, which permanently suppresses
+this hook's block for the rest of that chain — the delivery verdict is then still recorded into
+`run-meta.json` as evidence, just not enforced. That is the accepted cost of guard (b) and is
+declared in `parity/DISCREPANCIES.md` §M13 entry 3.

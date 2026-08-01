@@ -93,9 +93,19 @@ Three consequences worth stating plainly:
 1. **`./outputs/` is for the user, not for the agent.** Intermediate files, scratch data,
    caches, and working copies belong in the working directory. Putting a scratch file in
    `outputs/` is a contract violation even though nothing rejects it.
-2. **The listing is the delivery.** There is no receipt, no verification stage, and no
-   run-level error for an unlisted file. Where DeerFlow failed the run, the port relies on
-   prompt policy — a genuine weakening, recorded here rather than glossed.
+2. **The listing is the delivery — and since M13 it is verified.** This was recorded at M5
+   as a genuine weakening ("no receipt, no verification stage, and no run-level error for
+   an unlisted file… the port relies on prompt policy"). **That gap is now closed.**
+   `src/hooks/turn-snapshot.ts` captures a pre-turn workspace snapshot and
+   `src/hooks/delivery-gate.ts` (a `Stop` hook) diffs against it: a turn that creates or
+   modifies a file under `outputs/` without naming it in the final response is **blocked**
+   with the ported `_DELIVERY_INCOMPLETE_ERROR` text plus the unpresented paths, and the
+   verdict is written into `run-meta.json` as a put-if-absent delivery receipt carrying
+   `produced_paths` / `presented_paths` / `matched_paths`. Two differences from the
+   original survive and are declared in `parity/DISCREPANCIES.md` §M13: the check runs per
+   **turn** rather than per **run**, and it blocks the turn rather than terminalizing the
+   run as an error. What is enforced — "produced outputs must be presented" — is the
+   original's invariant.
 3. **The outputs-only path check disappears.** `present_files` raised
    `"Only files in /mnt/user-data/outputs can be presented"` for a path outside the
    directory. The port has no interception point, so nothing enforces the boundary.
