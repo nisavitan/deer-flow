@@ -234,3 +234,136 @@ the ones with an observable consequence.
 | **Blast radius** | Additive only. A reader comparing the two finds extra provenance data. |
 | **Mitigation** | The ported LastValue rule governs `summary_text` unchanged — including `_nonempty_summary`'s "a blank summary is a generation failure", so a blank write preserves the previous text instead of clearing history. The goal section is default-off so the default rendering matches the original's format. |
 | **Verified** | `src/summary/summary-state.test.ts` (16 tests, incl. blank-preserve and CAS), `src/summary/durable-context.test.ts` (goal section default-off). |
+
+---
+
+## M10 — checkpoints & resume
+
+### 1. Lease / heartbeat machinery → a single-process 2 h expiry constant — **degraded**
+
+| | |
+|---|---|
+| **Original** | Abandonment is decided by a **lease**. A heartbeat renews the run's lease every `lease_seconds/3` and fails closed at the last confirmed deadline (`ownership_lost`: abort + no further durable writes, the peer owns terminalization). Reconciliation runs at startup and every 3rd heartbeat cycle, single-flight, and claims expired- or NULL-lease active rows through the atomic `claim_for_takeover` CAS before terminalizing them. [manager.py:33-35, 1700-1784, 1845-2069] |
+| **Port** | There is no lease, no heartbeat, no takeover and no fence. `src/resume/recovery.ts` decides abandonment from two facts a file scan can observe: the record's `session_id` is not the current session, **and** its `updated_at` is older than `ORPHAN_EXPIRY_MS` = **2 hours**. The scan runs once, at `SessionStart` (`src/hooks/session-recover.ts`), which is the port's startup. |
+| **Why** | The port is single-process by design — the deployment collapse the runtime notes explicitly bless ("startup reclaims NULL-lease active rows", notes/runtime-and-persistence.md §9.9). With no second worker, a lease has nothing to arbitrate: there is no peer that could steal a run and no window in which two writers race for terminalization. What remains is the one question a lease also answered — *is anything still working on this?* — and the only evidence available is the record's own timestamp. |
+| **Why 2 hours** | Deliberately far longer than any real lease (the original renews in seconds). Too short would terminalize a run whose session is merely idle; too long would leave the thread's single active-run slot blocked (`ActiveRunExistsError` on every subsequent run) for the rest of the day. The constant is named, commented, and pinned by a test rather than inlined. |
+| **Blast radius** | A crashed run is reclaimed at the **next session start**, not within a lease period — between the crash and that session, `run-meta.json` still says `running`. A run abandoned less than 2 h ago is reported as a resume candidate instead of being terminalized, so its active-run slot stays held until the next scan after the expiry. Neither window exists in the original. Conversely, nothing can be *wrongly* fenced: with one writer, a stale terminalization cannot race a live worker, and every recovery write goes through the same `rev`-CAS as any other state write. |
+| **Verified** | `src/resume/recovery.test.ts` (19 tests: expiry matrix, current-session exclusion, terminal-untouched, fresh-untouched, receipt preservation, single-rev write, failure collection); `src/hooks/session-recover.test.ts` (10 tests). |
+
+### 2. Per-superstep rollback → not applicable — **intentionally omitted**
+
+| | |
+|---|---|
+| **Original** | `_capture_rollback_point()` eagerly materializes the pre-run state (messages + every non-message channel + raw `pending_writes`) under `_checkpoint_thread_lock` into an immutable `RollbackPoint`; `_rollback_to_pre_run_checkpoint()` then either **forks** from that captured checkpoint config (full mode) or replaces every captured channel on the head (delta mode, which cannot fork once sibling writes are attached). Capture failure sets `snapshot_capture_failed` and disables rollback entirely (fail-closed). [worker.py:765-786, 1551-1599, 1721-1825] |
+| **Port** | M10 implements **no rollback at all**, and the resume layer never claims one. There is no per-superstep anchor to roll back to: the recovery quantum is the stage, and the addressable anchors are the head state files plus the per-run `runs/<run_id>.pre/` snapshot that a deep run copies at run start (guarantee G4, a separate lane). Conversation and file rollback are native (`/rewind`), and the port does not wrap them. |
+| **Why it is "not applicable" rather than "missing"** | Rollback in the original restores a *point inside a run* — the state as of superstep N, reconstructed from a checkpoint row. The port has no such point: Layer 1 is the session transcript (native, turn-granular) and Layer 2 is a set of files each rewritten wholesale. "Restore superstep N" has no referent here. The behavioral requirement that survives — eager capture, materialized copy, fail-closed on capture failure — is expressed at run granularity by `runs/<run_id>.pre/`, which is exactly what state-checkpoint-resume.md §3.3 and G11 record as accepted losses: every DeerFlow behavior the port must reproduce is defined at turn/stage/run boundaries, never mid-superstep. |
+| **Blast radius** | A user who wants "undo the last half of this run" gets stage granularity, not superstep granularity: the interrupted stage re-runs from its beginning. There is no partial-superstep restore and no delta-linearization case (the fork-poisoning hazard class is designed out with the delta representation itself). Nothing in the resume path silently pretends otherwise — `restart_stale` re-runs whole stages. |
+| **Verified** | Absence, not behaviour: `src/resume/*` contains no restore path. The stage-level recovery quantum is pinned by `src/resume/resume-plan.test.ts` (stage-skip predicate: terminal entry + matching `commit_sha`); `/deerflow:status` states the limitation in its "What this is not" section. |
+
+### 3. Orphans are terminalized `interrupted`, not `error` — **degraded (declared naming deviation)**
+
+| | |
+|---|---|
+| **Original** | Reconciliation marks a claimed orphan `error` with `stop_reason="orphan_recovered"`; `shutdown(timeout)` marks non-settled runs `interrupted`. Two different terminal statuses for two different abandonment paths. [manager.py:1845-2069, 2136-2234] |
+| **Port** | Both paths produce `interrupted` + `stop_reason: "orphan_recovered"`, per state-checkpoint-resume.md §5 step 2. The port cannot distinguish "claimed from a dead peer" (an `error`-worthy fault) from "the process went away" (a clean `interrupted`) — with no lease and no peer, every orphan reaches recovery through the same door. |
+| **Why not `error`** | `error` in the port's vocabulary means the run *failed*, and a run whose process was killed did not fail — recording it as an error would put a fabricated failure in the thread's history and in every downstream count. `interrupted` is the honest reading, and `stop_reason: orphan_recovered` preserves the exact provenance the original stamped, so nothing is lost about *why* the record is terminal. |
+| **Blast radius** | Anything counting `error` runs sees fewer of them and correspondingly more `interrupted` ones. The `stop_reason` discriminates them exactly, so no information is destroyed. |
+| **Verified** | `src/resume/recovery.test.ts` ("terminalizes an expired non-terminal run with orphan_recovered and a zero receipt"); the receipt half (existing receipt preserved, zero receipt backfilled put-if-absent) matches the original's `put_if_absent` singleton exactly. |
+
+---
+
+## M11 — errors & goal loop
+
+### 1. The goal evaluator is not independent — **degraded**
+
+| | |
+|---|---|
+| **Original** | After each visible turn, `runtime/runs/worker.py` calls `evaluate_goal_completion`, which sends the goal objective plus the last 30 visible messages to a **separate, non-thinking evaluator model** (`create_goal_evaluator_model`, `thinking_enabled=False`) under a strict rubric and parses its typed JSON verdict `{satisfied, blocker, reason, evidence_summary}`. The evaluator has no stake in the answer: it never produced the work it judges. [goal.py:242-327] |
+| **Port** | A Claude Code hook is a short-lived subprocess with no model credentials and a blocking budget, so there is no second model to call. `src/hooks/stop-goal-evaluator.ts` runs the **deterministic** gates itself and, when they pass, emits `{"decision":"block"}` whose `reason` carries the **verbatim** rubric (`GOAL_EVALUATOR_SYSTEM_INSTRUCTION`) plus the same user content (`Active goal: … Visible conversation evidence: … Is the active goal fully satisfied?`). The **session model** then judges its own work under that rubric and acts: `goal-cli clear` when satisfied, keep working when `goal_not_met_yet`, `goal-cli record-evaluation '<json>'` for any other blocker. |
+| **Blast radius** | Self-evaluation bias. The judging *standard* is byte-identical, but the judge is the author, so the realistic failure mode is declaring victory early (a `satisfied` verdict the original's evaluator would have refused) rather than looping forever. The typed blocker taxonomy, the fail-closed `missing_evidence` default and the "never assume state changed" clause are all preserved verbatim, and the skill restates the bias explicitly. |
+| **Mitigation** | Everything that bounds the loop stays outside model control: continuation cap 8, no-progress breaker 2 keyed on SHA-256 of the latest visible assistant text, and the no-visible-evidence short circuit all run in the hook, on durable state the model does not write during the decision. The hook persists `continuation_count + 1` **before** it emits the block, so at most `max_continuations` blocks can ever be issued for one goal even if the model ignores every instruction in the reason. A second safeguard (`continuation_not_recorded`) stands the loop down if `stop_hook_active` is set while the counter is still 0, i.e. if the persistence itself is failing. |
+| **Verified** | `src/goal-loop/evaluator-prompt.test.ts` re-parses the Python literals out of `runtime/goal.py` and asserts the rubric and the user-content template match byte-for-byte; `src/goal-loop/stop-hook.test.ts` pins cap-exhausted → no block, fresh evidence → block-with-rubric, breaker-tripped → no block + `no_progress_detected`, and a 50-iteration loop that terminates after exactly 8 blocks. The bias itself is a documented absence, not a test. |
+
+### 2. Hidden continuation message → Stop-hook block reason — **relocated**
+
+| | |
+|---|---|
+| **Original** | A continuable verdict produces `make_goal_continuation_message`: a `HumanMessage` wrapped in `<goal_continuation>` and marked `additional_kwargs={"hide_from_ui": True, "deerflow_goal_continuation": True}`, streamed into the graph as another turn on the same thread. The user never sees it. [goal.py:391-408; worker.py:908-932] |
+| **Port** | There is no hidden-message channel and no way to inject a turn: the only control point at end-of-turn is the `Stop` hook, whose single lever is `{"decision":"block","reason":...}`. The same continuation instruction ("Continue working toward the active goal… Do not ask the user to continue unless you are genuinely blocked") therefore rides inside the block reason. `makeGoalContinuationMessage` is still ported verbatim and is what `goal-cli record-evaluation` returns for a continuable verdict. |
+| **Blast radius** | The continuation text is **visible** to the user, where the original's was hidden — the port's block reason surfaces in the transcript. The turn boundary also differs: the original starts a fresh graph turn, the port refuses to end the current one. |
+| **Mitigation** | The instruction text is unchanged, and the goal record (`continuation_count`, `no_progress_count`, `last_evaluation` including `stand_down_reason`) is written to `.deerflow/state/<thread>/goal.json` on every decision, so the loop remains as observable as the original's `values` frame. |
+| **Verified** | `src/goal-loop/orchestrate.test.ts` renders `<goal_continuation>` byte-for-byte against goal.py:391-408 including both fallback strings; `src/goal-loop/stop-hook.test.ts` asserts the block reason carries the rubric and the rendered evidence. |
+
+### 3. Durable-receipt and thread-unchanged predicates → evidence + CAS — **degraded**
+
+| | |
+|---|---|
+| **Original** | Before continuing, the worker requires a durable end-of-turn receipt (`_has_durable_goal_turn_receipt`: a checkpoint id, **no** `pending_writes`, and a visible trailing AI message) and re-checks that the thread did not move during evaluation (`thread_changed_after_evaluation` / `thread_changed_before_continuation`), all under `goal_thread_lock` with checkpoint-id CAS. [worker.py:1229-1246, 1403-1450] |
+| **Port** | There are no checkpoints and no `pending_writes`, so the receipt reduces to its observable half: the Stop hook fires only after the turn has ended, and the hook requires a non-empty **visible assistant** signature from the transcript before it will block (otherwise `blocked:missing_evidence`). Staleness protection is the state file's `rev` compare-and-set (`atomic-io.ts`), which is the port's `GoalWriteConflict`. |
+| **Blast radius** | The port cannot distinguish "turn ended" from "turn ended and every write landed" — that distinction has no counterpart. The two thread-changed stand-down reasons (`thread_changed_after_evaluation`, `thread_changed_before_continuation`) therefore never appear in the port's vocabulary; a concurrent writer surfaces as a `rev` conflict on the goal file instead. |
+| **Mitigation** | The evidence gate keeps the strongest half of the receipt (never continue on nothing), and every goal write is a CAS, so a racing writer loses rather than clobbers. |
+| **Verified** | `src/goal-loop/stop-hook.test.ts` (`no visible assistant evidence`, `an unreadable transcript is treated as no evidence`); CAS behaviour by `src/state/atomic-io.test.ts`. |
+
+---
+
+## M9 — memory
+
+### 1. 30-second debounce → batch-on-next-turn — **degraded**
+
+| | |
+|---|---|
+| **Original** | `MemoryUpdateQueue` is a process-local list plus a `threading.Timer`. `debounce_seconds` defaults to **30** (range 1–300); updates coalesce per `(thread_id, user_id, agent_name)`; a dedicated 4-worker pool (`memory-updater-sync`) runs the extraction LLM call off the event loop. `queue_max_depth` 1000, with signal-bearing updates always admitted. [core/queue.py:1-133; config.py:76-86] |
+| **Port** | The queue survives as a durable file (`.deerflow/memory/queue.jsonl`); the timer does not. A `Stop` hook appends the turn's last user message and last assistant response, and the batch is extracted by the model on the **next** `/deerflow:run` turn, or on an explicit `/deerflow:memory update`. |
+| **Why** | Claude Code has no long-lived server process to host a timer thread or a worker pool, and a hook must not block the turn on an LLM call. Extraction needs a model and a token budget; the next turn is the first moment both exist. |
+| **Blast radius** | Flush latency moves from "~30 s after the last turn" to "at the start of the next turn". Coalescing is preserved and in fact strengthened — several turns accumulate in one file and are extracted together. A session that ends and is never resumed leaves its final batch unextracted until the project is next opened; upstream would have flushed it via `shutdown_flush`. Backpressure is not ported: the queue file has no depth cap, because a per-turn append cannot outrun a per-turn drain the way a multi-tenant server queue can. |
+| **Verified** | `src/memory/queue.test.ts` (append/read/coalesce/clear, corrupt-line tolerance); end-to-end hook → `queue-read` → gate → `apply` → `queue-clear` exercised against the built `dist/`. |
+
+### 2. Middleware-mode passive capture → Stop-hook queue — **relocated**
+
+| | |
+|---|---|
+| **Original** | `MemoryMiddleware` (lead slot 23). `aafter_agent` filters the conversation to user inputs plus the final AI response (`filter_messages_for_memory` → `filter_trivial` → require ≥1 human and ≥1 AI → `detect_signals`) and enqueues it. `memory.mode: tool` is the alternative, registering `memory_search/add/update/delete`. [memory_middleware.py; deer_mem.py:202-293; tools.py:31-250] |
+| **Port** | A `Stop` hook performs the capture. The filter reduces to "last user message + last assistant response, both non-empty" — the ≥1-human/≥1-AI admission rule is preserved; the trivial-acknowledgment filter and the signal-detection patterns (`core/message_patterns/*.yaml`) are **not** ported. Tool mode is not ported at all. |
+| **Why** | There is no per-model-call middleware insertion point in Claude Code; `Stop` is the end-of-turn boundary. Signal detection existed to prioritize admission under queue backpressure — with no depth cap (entry 1) it has nothing left to arbitrate. Tool mode would add a second, model-directed write path that bypasses the deterministic gate this milestone exists to build (upstream itself notes tool mode "deliberately bypasses the staleness guardrails"). |
+| **Blast radius** | Pure-acknowledgment turns ("thanks", "ok") do reach the queue, so the model sees a little more noise at extraction time. The deterministic write gate rejects them anyway — no such turn yields a `user`+`durable`+`descriptive` fact — so the cost is tokens, not memory pollution. |
+| **Verified** | `src/memory/queue.test.ts::extractTurn` (last-of-each selection, tool_result records excluded, both-required rule, corrupt lines). |
+
+### 3. FTS5/BM25 retrieval index → omitted — **intentionally omitted**
+
+| | |
+|---|---|
+| **Original** | `core/retrieval.py` — a persistent SQLite FTS5 index with BM25 ranking, optional jieba Chinese tokenization, time-decay plus confidence weighting (`_CONFIDENCE_WEIGHT = 0.2`), category filters, per-scope isolation, lazy rebuild, and Gateway warm-up (`warm_retrieval`). `retrieval_adapter` defaults to `"fts5"`. `DeerMem.search` falls back to case-insensitive substring over canonical facts sorted by confidence whenever the adapter fails. [deer_mem.py:325-424; core/retrieval.py:1-68] |
+| **Port** | No index. Recall is the substring fallback plus the model reading `store-cli.js list`. |
+| **Why** | Three reasons, in order of weight. (1) **Scale**: `max_facts` is 100 and the port enforces it; BM25 over ≤100 short documents buys nothing a linear scan does not. (2) **It is already optional upstream** — substring is DeerMem's always-available path, kept precisely so "retrieval errors never make canonical memory unavailable", so omitting the adapter lands the port on a code path upstream itself guarantees. (3) **Cost**: a derived SQLite database, its rebuild lifecycle, warm-up scheduling, corruption recovery and connection teardown are a large amount of infrastructure for a set that fits in one prompt. `notes/skills-and-memory.md` §6 lists this under "What to drop" for exactly these reasons. |
+| **Blast radius** | No ranked search API, no time decay, no category-filtered query, no Chinese tokenization. Fact *injection* is unaffected — it never used the index, only confidence ranking within the token budget. The loss becomes real only if `max_facts` is raised far above 100, at which point the index should be reconsidered rather than the scan tuned. |
+| **Verified** | Documented absence, not a test. `src/memory/store.test.ts` pins the `listFacts` walk that replaces it. |
+
+### 4. Locks, revisions, journal, v1→v2 migration → single-writer assumption — **intentionally omitted**
+
+| | |
+|---|---|
+| **Original** | Per-scope cross-process advisory file locks (`file_lock_timeout_seconds`, default 10), a shared manifest revision plus per-fact revisions under optimistic CAS, typed conflict exceptions (`MemoryManifestRevisionConflict` / `MemoryFactRevisionConflict`), a recoverable target-file journal, and a one-way v1→v2 migration that durably writes `{manifest}.v1.bak` before any destructive write. [core/storage.py:42-60, 126-150] |
+| **Port** | Never-torn writes are preserved exactly (temp file → fsync → `rename(2)` → parent-dir fsync). The lock, dual-revision CAS, journal and migration are dropped. `memory.json` keeps a monotonic `revision` field because it is part of the documented on-disk shape, but it is not a CAS token — the state library's own `rev` envelope already provides compare-and-set for that file. |
+| **Why** | Claude Code sessions are effectively single-writer per project; there is no multi-worker Gateway contending for one user bucket. `notes/skills-and-memory.md` §6 puts this under "What to drop". There is no v1 data to migrate — the port has never written a v1 layout. |
+| **Blast radius** | Two concurrent Claude Code sessions writing the same project's memory can lose one side's fact write (last rename wins). No corruption is possible — each file is still all-or-nothing — but a lost update is. Revisit if the port ever grows a shared or remote memory root. |
+| **Verified** | `src/memory/store.test.ts` §atomicity (no temp files left behind; a planted half-written temp file never becomes visible; replace-in-place never appends). |
+
+### 5. Fact Markdown omits the `# title` heading — **intentionally omitted**
+
+| | |
+|---|---|
+| **Original** | `_render_fact_markdown` writes `---\n{front matter}\n---\n\n# {title}\n\n{content}\n`, where `title` is an explicit field or the first content line truncated to 160 characters. [core/storage.py:269-285] |
+| **Port** | The heading is omitted: the Markdown body **is** the atomic fact text. |
+| **Why** | Upstream derives the heading from the content purely for human browsing and re-derives it on every parse — it carries no information the content does not. Dropping it makes write→read round-trip byte-exact. |
+| **Blast radius** | A fact file rendered by the port is not byte-identical to one rendered by DeerFlow, so the two stores are not interchangeable without a trivial transform. Nothing in the port's read path or injection format depends on the heading. |
+| **Verified** | `src/memory/store.test.ts` §fact markdown round-trip (every field, multi-line/unicode/CJK bodies). |
+
+### 6. Token counting is always the char estimate, never tiktoken — **degraded**
+
+| | |
+|---|---|
+| **Original** | `memory.token_counting` defaults to `tiktoken` (accurate, but may block on a BPE download in network-restricted environments — issues #3402/#3429), with failed loads cached for a 600 s cooldown and falling back to the CJK-aware character estimate. `char` is a supported first-class mode. [core/prompt.py:202-309; config.py:87-105] |
+| **Port** | Always the CJK-aware character estimate, ported exactly: `floor((codepoints − cjk) / 4) + floor(cjk / 2)`. |
+| **Why** | tiktoken is a Python BPE library with no dependency-free TypeScript counterpart, and the port's `package.json` deliberately carries only `typescript` + `vitest`. Upstream already ships this exact mode. |
+| **Blast radius** | The budget is slightly conservative for English/code and slightly generous for some scripts, relative to real BPE. One second-order effect: because the budget is enforced against the **sum of per-line** estimates and the estimator floors twice per call, the estimate of the concatenated block can exceed the budget by at most `2 × (lines − 1)` — a couple of tokens on a 2000-token budget. Upstream has the identical property in `char` mode. |
+| **Verified** | `src/memory/injection.test.ts` pins the formula against an independent reimplementation, the per-line budget invariant, and the `2 × (lines − 1)` bound. |
