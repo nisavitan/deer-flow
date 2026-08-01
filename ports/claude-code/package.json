@@ -1,0 +1,17 @@
+{
+  "name": "deerflow-claude-code",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TypeScript sources for the DeerFlow Claude Code plugin (hooks, state library, policy modules, prompts)",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "check": "tsc -p tsconfig.json --noEmit && vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

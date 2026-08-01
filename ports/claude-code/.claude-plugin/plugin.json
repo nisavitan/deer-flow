@@ -1,0 +1,10 @@
+{
+  "name": "deerflow",
+  "description": "DeerFlow for Claude Code — faithful source port of the ByteDance DeerFlow agent harness (lead-agent policy, deterministic delegation engine, middleware guards, skills, memory) running natively on Claude Code.",
+  "version": "0.1.0-m1",
+  "author": {
+    "name": "DeerFlow Claude Code port (from bytedance/deer-flow @ 0950924)"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/nisavitan/deer-flow/tree/port/claude-code-architecture/ports/claude-code"
+}
