@@ -92,7 +92,7 @@ Attributed to the **first** milestone cited in the Status cell (a row that says 
 
 ## 2. Not ported — the honest list
 
-**85 rows are still `planned` (78) or `partial` (7).** Adding the rows that are neither ported nor plannable as-is — `needs-investigation` (11) and `deferred` (1) — gives **97 of 199 rows without a completed port**.
+**84 rows are still `planned` (77) or `partial` (7).** Adding the rows that are neither ported nor plannable as-is — `needs-investigation` (11) and `deferred` (1) — gives **96 of 199 rows without a completed port**.
 
 Before the M14 status hygiene (§1.1) these read 138 and 150. The 53-row difference is entirely the 44 `platform-native` and 9 `excluded (delivery)` rows, which were never port work: **no row moved because anything was implemented.** Both sets are listed in full at the end of this section so the shrunken count can be audited line by line.
 
@@ -411,7 +411,7 @@ The labels exactly as written, before any mapping:
 
 **M14 added the call.** `src/hooks/precompact-summary.ts` now enqueues the conversation tail through `appendQueueEntry` after writing the digest, tagged `source: 'precompact-flush'` so a queue consumer can tell a boundary flush from the routine Stop capture. The Stop hook is unchanged and remains the routine path. Verified by `src/hooks/precompact-summary.test.ts` ("memory flush at the compaction boundary", 4 cases: tail enqueued on the digest path; half turn, malformed transcript and stand-down each queue nothing and still exit 0). The entry is relabelled **relocated** in §3.1/§3.2 above, and the residual differences are stated in the entry itself — the carrier is the transcript rather than the message list, and there is no `skip_memory_flush` counterpart for subagent sessions.
 
-**One label still lags the code.** The matrix row `agents/memory/summarization_hook.py :: memory_flush_hook` (§7) still reads `planned`. Flipping it was outside the data-row edits authorised for this milestone (§11 excluded groups and confirmed platform-native rows only, see §1.1), so it is reported here rather than changed: the row is now at least `partial`, and every count in §1 and §2 that includes it still counts it as `planned`. Its Behavior-preserved classification is `approximate` either way, so no percentage in §5 depends on the fix.
+Resolution note (post-closure): the matrix row `agents/memory/summarization_hook.py :: memory_flush_hook` was flipped to `implemented (M14-fix: PreCompact enqueues conversation tail)` by orchestrator decision after the closure fixes landed; the count tables above include it as implemented (45). Its Behavior class is `approximate` either way, so no percentage depends on it.
 
 ---
 
