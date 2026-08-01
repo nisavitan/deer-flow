@@ -12,6 +12,8 @@
 
 Everything below is machine-counted from the files named. No number in this report is an estimate.
 
+> **Final five-way computation (post-closure): §8.** Recomputed with an `unverified` class under an evidence-tier rule; for any claim about what the port *demonstrably* does, §8 supersedes the four-way split in §5.
+
 ---
 
 ## 1. Traceability-matrix accounting
@@ -679,3 +681,220 @@ $ npm run parity
 $ echo $?
 0
 ```
+
+---
+
+## 8. Final five-way computation (post-closure)
+
+§5 classified each in-scope row by what its port *would* preserve. This section reclassifies the same 158 rows by what the port can *prove* it preserves, adding a fifth class: **unverified**. The rule (user directive, 2026-08-01):
+
+- A behavior whose port code exists but has **no evidence** is **unverified**, not approximate.
+- A row classified `exact` stays `exact` only with **tier a–d** evidence; otherwise it demotes to `unverified` — exact claims need strong evidence.
+- A row classified `approximate` keeps `approximate` with **any tier a–e** evidence; otherwise `unverified`.
+- `intentionally omitted` and `blocked` are unchanged — they claim an absence, not a behavior, and §2/§3 already audit those claims.
+- **Platform-native rows** count as approximate-with-platform-evidence when `claude-code-capabilities.md`'s Evidence column (DOC/CLI/EXP) verifies the native behavior; otherwise unverified.
+
+Evidence tiers, strongest first:
+
+| Tier | Definition | Where it lives |
+|---|---|---|
+| **a** | vector/golden-driven test (a `parity/baseline/*` fixture is consumed) | the 17 baseline-loading test files (`grep -rl "parity/baseline" src --include="*.test.ts"`) |
+| **b** | frozen-copy drift test asserting byte/verbatim equality against cited original source lines | e.g. `evaluator-prompt.test.ts` (goal.py:299-308), `wrapper.test.ts` (summarization_middleware.py:415-435), `env-scrub.test.ts`, `extraction-prompt.test.ts` (sha256 vs upstream YAML), `snapshot.test.ts` (types.py:18-27), `injection.test.ts`/`write-gate.test.ts` (config.py line anchors), `durable-context.test.ts` (@ 0950924) |
+| **c** | recorded adversarial-gate scenario | `parity/fixtures/adversarial/RESULTS.md` A1–A8 (all PASSED, dated) |
+| **d** | recorded live smoke/measurement | PROGRESS.md milestone rows (M4 headless skill smoke, M5 allow+deny smokes, M6 caps smoke, M7 live smokes, M10 live orphan smoke, M13 block-then-pass + full receipt), `parity/fixtures/context-loss/RESULTS.md` (Measurement A: 12/12 resume recall; PreCompact subprocess smoke), the O3 `hooks.jsonl` end-to-end subprocess case |
+| **e** | ordinary unit test directly asserting the ported behavior's contract | weakest tier; counts for `approximate` only, and rows whose ONLY evidence is this tier are tagged in §8.5 |
+
+### 8.1 Per-row evidence map — rows that keep a verified class (56)
+
+**exact, evidence tier a–d — 18 rows**
+
+| Row | Status | Evidence |
+|---|---|---|
+| §1 `lead_agent/prompt.py` :: apply_prompt_template | implemented (M3) | **a** — 3 golden renders byte-exact (`prompt_renders/`, `lead.test.ts`) |
+| §1 `factory.py` :: _TODO_SYSTEM_PROMPT | implemented (M3) | **a** — covered by the M3 golden renders ("0 unexplained diffs", PROGRESS M3) |
+| §1 `thread_state.py` :: reducers | implemented (M2) | **a** — `state_reducers.json` (18 vectors) via the state tests |
+| §1 `goal_state.py` | implemented (M2) | **a** — `goal_counters.json` + `state_reducers.json` via `goal.test.ts` |
+| §2 `tool_result_meta.py` | implemented (M7) | **a** — all 38 + 4 baseline vectors, whole-object exact (`tool-meta.test.ts`) |
+| §2 `durable_context_middleware.py` (exact = capture) | partial | **a** — `delegations_ledger.json` via `ledger-io.test.ts`; **b** — verbatim authority contract @ 0950924 (`durable-context.test.ts`); **d** — M7 live smokes |
+| §3 `worker.py` :: orphan/crash recovery | implemented (M10) | **d** — recorded live orphan smoke (PROGRESS M10); **e** — `recovery.test.ts`, `session-recover.test.ts` |
+| §3 `runtime/goal.py` | implemented (M11) | **b** — evaluator prompt byte-equal to goal.py:299-308; **a** — `goal_counters.json` gate matrix/cap walk replays |
+| §4 `subagents/status_contract.py` | implemented (M6) | **a** — 60/60 golden renders × 2 passes; **c** — A5 |
+| §7 `deermem core/storage.py + paths.py` | implemented (M9) | **b** — categories anchored to storage.py:39; sharding checked against independent sha256 (`store.test.ts`) |
+| §7 `deermem core/updater.py` | implemented (M9) | **b** — thresholds/clamps anchored to config.py:87-105/116-175 (`write-gate.test.ts`) |
+| §7 `deermem core/prompt.py` | implemented (M9) | **b** — budgets anchored to config.py; upstream labels/order/formula asserted (`injection.test.ts`) |
+| §7 `deermem core/prompts/*.yaml` | implemented (M9) | **b** — sha256-verified byte-verbatim vs upstream; system message renders byte-exact (`extraction-prompt.test.ts`) |
+| §8 `workspace_changes/types.py` | implemented (M13) | **b** — limits verbatim vs types.py:18-27 (`snapshot.test.ts`) |
+| §8 `workspace_changes/scanner.py` | implemented (M13) | **d** — M13 live smoke (full receipt exercises the scan); **e** — `snapshot.test.ts` |
+| §8 `workspace_changes/diff.py` | implemented (M13) | **d** — M13 live smoke (produced set in the receipt); **e** — `snapshot.test.ts` |
+| §10 `config/loop_detection_config.py` | partial | **a** — every threshold asserted against baseline `config_defaults` |
+| §10 `config/subagents_config.py` :: clamps | implemented (M2) | **a** — `caps_clamping.json` (40 vectors); **c** — A7 |
+
+**approximate, any evidence — 38 rows** (10 of them platform-native, kept on the capabilities-matrix evidence column)
+
+| Row | Status | Evidence |
+|---|---|---|
+| §1 `lead_agent/prompt.py` :: skills section | partial | **a** — skill-index section inside the M3 golden renders |
+| §1 `client.py` | platform-native | **platform** (EXP E3-a/E7-a); **d** — context-loss Measurement A: 12/12 resume recall across processes |
+| §2 `read_before_write_middleware.py` | implemented (M7) | **b** — frozen hash-gate rules (`read-marks`); **d** — O3 end-to-end write-gate subprocess case |
+| §2 `tool_error_handling_middleware.py` (middleware) | partial | **a** — taxonomy rides the `tool_meta.json` vectors; **e** — `post-tool-meta.test.ts` |
+| §2 `dynamic_context_middleware.py` | partial | **b** — date reminder frozen verbatim (`turn-context.ts`); **e** — `turn-context.test.ts` |
+| §2 `summarization_middleware.py` | implemented (M8) | **b** — wrapper/escaping/`_bound_text`/`_nonempty_summary` frozen vs cited lines; **d** — PreCompact subprocess smoke (context-loss RESULTS) |
+| §2 `deferred_tool_filter_middleware.py` | platform-native | **platform** — ToolSearch deferral verified (capabilities §9) |
+| §2 `subagent_limit_middleware.py` | implemented (M2, policy) | **a** — caps vectors; **c** — A7 verbatim limit note live |
+| §2 `loop_detection_middleware.py` | implemented (M7) | **a** — 99 steps/117 md5 literals; **c** — A8 live warn@3/hard-block@5 |
+| §2 `terminal_response_middleware.py` | partial | **e** only — Stop-hook evidence gate (`stop-hook.test.ts`); tagged §8.5 |
+| §3 `runs/manager.py` (reconciliation half) | partial | **d** — M10 live orphan smoke; **e** — `recovery.test.ts` |
+| §3 `runs/store/base.py` | implemented (M2) | **e** only — `run-meta.test.ts` (identity + terminal/receipt invariants); tagged §8.5 |
+| §3 `context_compaction.py` | implemented (M8) | **b** — write path anchored to `_nonempty_summary` lines; **e** — digest tests |
+| §3 `checkpoint_mode.py` | confirmed replace-native | **platform** (sessions EXP E3-a); **e** — `staleness.test.ts` schema gate |
+| §3 `checkpoint_state.py` | implemented (M2) | **e** only — `atomic-io.test.ts`; tagged §8.5 |
+| §4 `subagents/executor.py` | implemented (M6) | **a** — workflow-sync/task-schema vectors; **c** — A3/A4/A5/A6; **d** — M6 smokes |
+| §4 `subagents/builtins/general_purpose.py` | implemented (M6) | **c** — A5/A6 ran the agent live; **d** — M6 smokes |
+| §4 `subagents/builtins/bash_agent.py` | implemented (M6) | **c** — A6/A6-variant; **d** — M6 smokes |
+| §4 `tools/builtins/task_tool.py` | implemented (M6) | **a** — `task-schema.test.ts` (sha256 of the docstring golden) + caps replay; **c** — A6/A7 |
+| §5 `tools/builtins/tool_search.py` (was **exact**) | platform-native | **platform** — ToolSearch query forms verified (capabilities §9); reclassified exact → approximate: platform evidence verifies the native capability, not byte-parity of the port |
+| §5 `present_file_tool.py` | implemented (M5+M13) | **b** — `_DELIVERY_INCOMPLETE_ERROR` verbatim (`delivery.test.ts`); **d** — M13 block-then-pass + full-receipt smoke |
+| §5 `sandbox/tools.py` :: bash_tool | implemented (M5, contract) | **c** — A2/A3/A4 (env deny, crash, hang all recorded); **d** — M5 allow+deny smokes |
+| §5 `sandbox/tools.py` :: read_file_tool | implemented (M5, contract) | **c** — A1 (sensitive read prevented, no canary leak) |
+| §6 `skills/types.py` | platform-native | **platform** — DOC skills.md + EXP E1-a |
+| §6 `skills/frontmatter.py` | platform-native | **platform** — DOC skills.md |
+| §6 `skills/parser.py` | platform-native | **platform** — DOC skills.md |
+| §6 `skills/storage/**` | platform-native | **platform** — DOC (user/project/plugin scopes) |
+| §6 `skills/catalog.py` | platform-native | **platform** — DOC (model auto-invocation by description) |
+| §6 `skills/describe.py` | implemented (M3, index section) | **a** — skill-index section in the golden renders |
+| §6 `skills/public/**` (16 packs) | implemented (M4) | **d** — recorded headless body-load smoke + `/deerflow:academic-paper-review` run |
+| §7 `agents/memory/manager.py` | implemented (M9) | **e** only — the single impl covered by store/write-gate/injection tests; tagged §8.5 |
+| §7 `agents/memory/summarization_hook.py` | implemented (M14-fix) | **d** — PreCompact subprocess smoke (context-loss RESULTS); **e** — 4 flush cases in `precompact-summary.test.ts` |
+| §7 `deer_mem.py` | implemented (M9) | **e** only — capture/gate/persist/inject via `write-gate.test.ts` + `store.test.ts`; tagged §8.5 |
+| §7 `deermem core/queue.py` | implemented (M9) | **e** only — `queue.test.ts` (24 tests); tagged §8.5 |
+| §8 `sandbox/env_policy.py` | implemented (M5) | **b** — denylist + pattern set frozen vs original (93 tests); **c** — A2 live deny |
+| §8 `workspace_changes/recorder.py + api.py` | implemented (M13) | **d** — M13 live smoke; **e** — `workspace-changes.test.ts`, `turn-snapshot.test.ts` |
+| §9 `mcp/client.py` | platform-native | **platform** — DOC mcp.md + CLI `claude mcp` |
+| §9 `mcp/oauth.py` | platform-native | **platform** — DOC (OAuth for remote servers) |
+
+### 8.2 The recomputation, shown
+
+| Move | Rows | Arithmetic |
+|---|---:|---|
+| exact, kept (tier a–d) | 18 | of §5's 45 |
+| exact → approximate (platform-native, capability-verified) | 1 | `tools/builtins/tool_search.py` |
+| exact → **unverified** (no tier a–d evidence) | 26 | 25 `planned` + 1 `deferred` — none has port code, so none can have evidence |
+| approximate, kept (tier a–e or platform) | 37 | of §5's 88 |
+| approximate → **unverified** | 51 | 36 `planned` + 8 `needs-investigation` + 7 with code/contract-docs but no evidence (§8.4 group D) |
+| intentionally omitted, unchanged | 23 | absence claims, audited in §2/§3 |
+| blocked, unchanged | 2 | §3.3 |
+
+Check: 18 + 1 + 26 = 45 ✓ · 37 + 51 = 88 ✓ · exact 18 + approximate (37 + 1) 38 + omitted 23 + blocked 2 + unverified (26 + 51) 77 = **158** ✓
+
+### 8.3 The five numbers
+
+| Class | Numerator | Denominator | Percentage |
+|---|---:|---:|---:|
+| **exact** (evidence tier a–d) | 18 | 158 | **11.4%** |
+| **approximate** (evidence tier a–e / platform-verified) | 38 | 158 | **24.1%** |
+| **intentionally omitted** | 23 | 158 | **14.6%** |
+| **blocked** | 2 | 158 | **1.3%** |
+| **unverified** | 77 | 158 | **48.7%** |
+| **Total** | **158** | **158** | **100%** (100.1 with per-line rounding) |
+
+- **Evidenced equivalence: exact + approximate = 56 / 158 = 35.4%.** This is the number that survives the evidence rule; §5.2's 84.2% was a *disposition* figure (what the port would preserve if every planned row were built and proven).
+- Of the 56, **46** carry strong evidence (tier a–d or platform), **10** ride on ordinary unit tests or platform-doc verification alone at their weakest link (§8.5 lists the 6 tier-e-only rows; the 10 platform-native rows are itemized in §8.1).
+
+### 8.4 The complete unverified list — 77 rows, each with why
+
+**Group A — no port code exists (`planned`): 61 rows.** Nothing to test; evidence is impossible until someone ports them. Three carry partial code for a *different* row's half and are marked †.
+
+| § | Row (was exact — 25) |
+|---|---|
+| §1 | `constants.py` |
+| §2 | `tool_result_sanitization_middleware.py` · `sandbox_audit_middleware.py` · `_bounded_dict.py` · `delegation_ledger.py`† · `skill_context.py`† |
+| §3 | `worker.py` :: receipts/title/duration finalizers · `runs/naming.py` · `events/catalog.py` · `events/store/base.py` · `events/store/jsonl.py` · `runtime/context_keys.py` |
+| §4 | `subagents/config.py` · `subagents/registry.py` · `contracts/subagent_status_contract.json` (enums are vector-asserted via `result-format.test.ts`, but the row's own deliverable — the contract copied into the plugin — has not happened) |
+| §5 | `utils/**` |
+| §6 | `skills/validation.py` · `skills/skillscan/**` · `skills/review/**` · `.agent/skills/**` |
+| §9 | `guardrails/provider.py` · `guardrails/middleware.py` |
+| §10 | `config/tool_progress_config.py` · `config/token_budget_config.py` · `config/tool_output_config.py` |
+
+† `delegation_ledger.py` and `skill_context.py`: `delegations_ledger.json` / `state_reducers.json` vectors do pass against `src/state/*.ts`, but those vectors exercise the state-channel halves owned by the `thread_state.py` and `durable_context` rows; the extraction-from-messages and render surfaces these rows name are still `planned` (report §5.5 counts both unshipped), so the rows get no row-scope credit.
+
+| § | Row (was approximate — 36) |
+|---|---|
+| §1 | `lead_agent/agent.py` :: make_lead_agent · `lead_agent/agent.py` :: build_middlewares · `lead_agent/agent.py` :: resolution helpers · `factory.py` :: create_deerflow_agent · `features.py` · `human_input.py` |
+| §2 | `input_sanitization_middleware.py` · `thread_data_middleware.py` · `tool_error_handling_middleware.py` :: _build_runtime_middlewares · `skill_tool_policy_middleware.py` · `todo_middleware.py` · `memory_middleware.py` (the Stop-hook capture path exists — `memory-extract.js` — but no test or recorded run asserts the enqueue-on-Stop contract, and the row is still `planned`) · `clarification_middleware.py` |
+| §3 | `worker.py` :: run_agent · `journal.py` · `secret_context.py` |
+| §5 | `tools/tools.py` · `clarification_tool.py` · `setup_agent_tool.py` · `community/**` |
+| §6 | `skills/tool_policy.py` |
+| §8 | `local_sandbox.py` · `sandbox/security.py` · `sandbox/search.py` · `config/paths.py` |
+| §9 | `guardrails/builtin.py` |
+| §10 | `app_config.py` · `skills_config.py + tool_search_config.py` · `memory_config.py` · `sandbox_config.py` · `agents_config.py` · small toggle schemas · `extensions_config.py` · `config.example.yaml` · `extensions_config.example.json` · `.env.example` |
+
+**Group B — deferred: 1 row.** §2 `tool_progress_middleware.py` — no port code by declared deferral (not omission); no evidence possible.
+
+**Group C — needs-investigation, unresolved: 8 rows.** The investigation itself is the missing evidence: §2 `skill_activation_middleware.py`, §2 `mcp_routing_middleware.py`, §5 `update_agent_tool.py`, §5 `invoke_acp_agent_tool.py`, §5 `skill_manage_tool.py`, §6 `skills/slash.py`, §6 `skills/installer.py`, §9 `mcp/tools.py`.
+
+**Group D — port surface exists, but no evidence of the behavior: 7 rows.** These are the rows the new rule was written for.
+
+| Row | What exists | Why unverified |
+|---|---|---|
+| §5 `sandbox/tools.py` :: write_file_tool | M5 mapping contract (sandbox-contract.md §1, §4.2) | no test and no recorded scenario exercises the Write mapping or the dropped-append workarounds; A1–A4 and the M5 smokes never invoked it |
+| §5 `sandbox/tools.py` :: str_replace_tool | M5 mapping contract | same — the tightened-uniqueness delta is documented, never demonstrated |
+| §5 `sandbox/tools.py` :: ls_tool | M5 mapping contract | no test, no recorded run |
+| §5 `sandbox/tools.py` :: glob_tool | M5 mapping contract | no test, no recorded run; native Glob is not a capabilities-matrix row |
+| §5 `sandbox/tools.py` :: grep_tool | M5 mapping contract | same, and the case-sensitivity flip is documented, never demonstrated (A8 used `grep` via Bash, not the Grep tool) |
+| §6 `skills/public/**` (7 optional packs) | converted at M4, gated | matrix's own words: "not runnable without provider keys" — the M4 smoke covered the plugin-loaded set; no recorded run of any optional pack |
+| §11 `persistence/run/model.py + thread_meta/model.py` | run-meta.json schema (M2) informed by its field lists | no test asserts the original field lists were carried; `run-meta.test.ts` asserts the *port's* invariants, which is the `runs/store` row's contract, and this row's status is `excluded (delivery)` |
+
+Count: 61 + 1 + 8 + 7 = **77** ✓
+
+### 8.5 Tier-e-only rows — kept `approximate` on the weakest evidence alone: 6
+
+| Row | Only evidence |
+|---|---|
+| §2 `terminal_response_middleware.py` | `stop-hook.test.ts` (evidence-gate unit tests; the gate is port-authored, so no baseline vector can exist for it) |
+| §3 `runs/store/base.py` | `run-meta.test.ts` (9 tests) |
+| §3 `checkpoint_state.py` | `atomic-io.test.ts` (16 tests) |
+| §7 `agents/memory/manager.py` | the single-impl collapse covered indirectly by store/write-gate/injection tests |
+| §7 `deer_mem.py` | `write-gate.test.ts` + `store.test.ts` (the row's own admission/injection wiring has no vector, no frozen anchor of its own, no recorded run) |
+| §7 `deermem core/queue.py` | `queue.test.ts` (24 tests) |
+
+The 26 exact-classified rows demoted in §8.2 include **zero** tier-e-only demotions: every one of them has *no* evidence at any tier, because none is implemented. No implemented exact-classified row lost its class for having only unit tests — the M9/M13 rows all turned out to carry source-line-anchored (tier b) or recorded-live (tier d) evidence.
+
+### 8.6 Deltas vs the four-way computation (§5.2)
+
+| Class | §5.2 | §8.3 | Δ | Where it went |
+|---|---:|---:|---:|---|
+| exact | 45 (28.5%) | 18 (11.4%) | −27 | 26 → unverified (unimplemented), 1 → approximate (`tool_search`, platform-verified capability ≠ byte-parity evidence) |
+| approximate | 88 (55.7%) | 38 (24.1%) | −50 | 51 → unverified, +1 from exact |
+| intentionally omitted | 23 (14.6%) | 23 (14.6%) | 0 | — |
+| blocked | 2 (1.3%) | 2 (1.3%) | 0 | — |
+| unverified | — | 77 (48.7%) | +77 | 61 no-code + 8 needs-investigation + 1 deferred + 7 code-without-evidence |
+| exact + approximate | 133 (84.2%) | 56 (35.4%) | −77 | the entire gap is the unverified class |
+
+### 8.7 Honest reading
+
+The 84.2% headline in §5.2 measured *dispositions*: how much of the engine's behavior has a viable equivalent on the target if every row is eventually built and proven. Under the evidence rule the number that survives is **35.4%** — 56 of 158 in-scope behaviors are both ported (or natively covered) *and* demonstrated, 46 of them by vectors, frozen source anchors, recorded adversarial gates, or recorded live runs, and only 6 resting on ordinary unit tests alone. The 48.7% now labeled unverified is not newly discovered loss: 61 of those 77 rows were always `planned` and have no code to test, 8 await an investigation that never ran, 1 is deferred, and only 7 have a real port surface (five M5 tool-mapping contracts, the optional skill packs, one schema-feed row) whose behavior nobody has yet demonstrated. What the recomputation actually changes is the burden of proof: the port's verified core — state reducers, prompts, caps, loop detection, tool-meta taxonomy, goal loop, memory guardrails, workspace delivery, the summarization wrapper — is exceptionally well evidenced, and everything outside it should be quoted as *unproven*, never as *approximately preserved*.
+
+### 8.8 Post-A9 revision (recorded gate A9, commit b0df7ce1)
+
+Gate **A9** landed after the computation above (`parity/fixtures/adversarial/RESULTS.md`, "A9 — tool-mapping live exercise", PASSED, 2026-08-01): one recorded headless run exercised Glob → Grep → Read (read-mark stamped) → Edit (write-gate silent-allow after read) → Write (new file), each wrapped by loop-guard and post-tool-meta with the full hook chain visible in `hooks.jsonl`. That is **tier-d recorded-live evidence** for exactly the five §8.4 Group D rows that had a mapping contract but no demonstration:
+
+- §5 `sandbox/tools.py` :: `write_file_tool`, `str_replace_tool`, `ls_tool`, `glob_tool`, `grep_tool` — **unverified → approximate (tier d, A9)**. Their §8.4 Group D entries are superseded; Group D shrinks to 2 rows (the 7 optional skill packs, the `persistence/run+thread_meta` field lists) and the unverified total to 72.
+
+The same run also fired the **delivery gate live end-to-end** (first Stop blocked with `produced=1 missing=1`, compliant re-answer, second Stop `receipt=written`). No class or tier changes: `present_file_tool` was already `approximate` with tier d (the M13 block-then-pass smoke); A9 is a second independent live record for it. The PreCompact *subprocess* smoke noted for `summarization_hook` is a memory row, not a delivery row, and is unaffected.
+
+**Revised five-way table** (§8.3 superseded; pre-A9 numbers kept as the prior line):
+
+| Class | Pre-A9 | Post-A9 | % of 158 |
+|---|---:|---:|---:|
+| exact (tier a–d) | 18 | 18 | 11.4% |
+| approximate (tier a–e / platform) | 38 | **43** | **27.2%** |
+| intentionally omitted | 23 | 23 | 14.6% |
+| blocked | 2 | 2 | 1.3% |
+| unverified | 77 | **72** | **45.6%** |
+| **Total** | **158** | **158** | 100% (100.1 with per-line rounding) |
+
+Check: 18 + 43 + 23 + 2 + 72 = **158** ✓ (arithmetic of the move: approximate 38 + 5 = 43; unverified 77 − 5 = 72; no other class touched).
+
+- **Evidenced equivalence: exact + approximate = 61 / 158 = 38.6%** (was 56/158 = 35.4% pre-A9).
+- The unverified breakdown becomes: 61 no-code (`planned`) + 8 needs-investigation + 1 deferred + 2 code-without-evidence = 72.
+- The tier-e-only list (§8.5) is unchanged at 6 — the five promoted rows enter `approximate` on tier d, not tier e.
