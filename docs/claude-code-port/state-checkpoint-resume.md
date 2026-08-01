@@ -172,7 +172,7 @@ RMW rule: LastValue — replace `summary_text` wholesale [Verified from source: 
 ```
 Rules [Inference/design, mirroring notes/runtime-and-persistence.md §1 steps 16-19]:
 1. One non-terminal run per thread: a new run refuses to start (or offers recovery, §5) while `status ∈ {pending, running}` — the port's version of the `uq_runs_thread_active` admission gate.
-2. `status` values: `pending | running | success | error | interrupted`; `stop_reason` carries the DeerFlow taxonomy (`loop_capped`, `token_capped`, `safety_capped`, `subagent_limit_capped`, `model_length_capped`, `orphan_recovered`).
+2. `status` values: `pending | running | completed | error | interrupted` (naming note: the original runs table uses `success`; the port standardizes on `completed`, aligning with the subagent status-contract vocabulary — declared naming deviation, semantics identical); `stop_reason` carries the DeerFlow taxonomy (`loop_capped`, `token_capped`, `safety_capped`, `subagent_limit_capped`, `model_length_capped`, `orphan_recovered`).
 3. **Receipt-with-status atomicity**: the terminal write sets `delivery` and terminal `status` in the *same* atomic file write — collapsing DeerFlow's receipt-before-status two-store ordering into one rename (see G6 in §7).
 4. On terminal, the record is copied to `runs/<run_id>.json` (archive; failure to archive is non-fatal — `run-meta.json` remains authoritative).
 
