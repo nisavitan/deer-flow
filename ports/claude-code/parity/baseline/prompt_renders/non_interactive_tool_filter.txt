@@ -1,0 +1,12 @@
+# BASELINE NOTE (original DeerFlow engine, commit 0950924)
+# produced by: ports/claude-code/parity/baseline/extract_vectors.py
+#
+# `non_interactive` (configurable.non_interactive, set only for internally authenticated
+# scheduler launches) is NOT an input to apply_prompt_template — the rendered lead system
+# prompt is byte-identical with and without it. Its entire effect is removing tools from the
+# bound toolset in deerflow.agents.lead_agent.agent:make_lead_agent.
+#
+# Real value of deerflow.agents.lead_agent.agent._NON_INTERACTIVE_DISABLED_TOOL_NAMES:
+[
+  "ask_clarification"
+]

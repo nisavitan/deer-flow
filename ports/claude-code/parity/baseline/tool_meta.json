@@ -1,0 +1,684 @@
+{
+  "_provenance": {
+    "commit": "0950924",
+    "extracted_by": "ports/claude-code/parity/baseline/extract_vectors.py",
+    "group": "G3",
+    "method": "executed the original engine functions/classes listed in source_symbols",
+    "note": "Each case builds a real langchain ToolMessage and records the full deerflow_tool_meta the engine stamped.",
+    "source_symbols": [
+      "deerflow.agents.middlewares.tool_result_meta:normalize_tool_result",
+      "deerflow.agents.middlewares.tool_result_meta:normalize_tool_message",
+      "deerflow.agents.middlewares.tool_result_meta:stamp_exception_meta"
+    ]
+  },
+  "normalize_tool_result_cases": [
+    {
+      "deerflow_tool_meta": {
+        "error_type": null,
+        "recommended_next_action": "continue",
+        "recoverable_by_model": true,
+        "source": "content_analysis",
+        "status": "success"
+      },
+      "input": {
+        "content": "Found 3 matches in src/app.py",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "success_plain_text"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": null,
+        "recommended_next_action": "continue",
+        "recoverable_by_model": true,
+        "source": "content_analysis",
+        "status": "success"
+      },
+      "input": {
+        "content": "",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "empty_result"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "auth",
+        "recommended_next_action": "stop",
+        "recoverable_by_model": false,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "Error: 401 unauthorized",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "error_prefix_auth_401"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "auth",
+        "recommended_next_action": "stop",
+        "recoverable_by_model": false,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "Error: invalid api key provided",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "error_prefix_auth_invalid_api_key"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "rate_limited",
+        "recommended_next_action": "summarize",
+        "recoverable_by_model": false,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "Error: rate limit exceeded, retry later",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "error_prefix_rate_limited"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "transient",
+        "recommended_next_action": "try_alternative",
+        "recoverable_by_model": false,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "Error: connection timeout while contacting host",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "error_prefix_transient_timeout"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "config",
+        "recommended_next_action": "stop",
+        "recoverable_by_model": false,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "Error: no api key configured for this provider",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "error_prefix_config"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "permission",
+        "recommended_next_action": "try_alternative",
+        "recoverable_by_model": true,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "Error: permission denied: /etc/shadow",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "error_prefix_permission"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "no_results",
+        "recommended_next_action": "rewrite_query",
+        "recoverable_by_model": true,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "Error: no results found for that query",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "error_prefix_no_results"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "not_found",
+        "recommended_next_action": "rewrite_query",
+        "recoverable_by_model": true,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "Error: no such file or directory: /tmp/missing.txt",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "error_prefix_not_found"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "not_found",
+        "recommended_next_action": "rewrite_query",
+        "recoverable_by_model": true,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "Error: 404 while resolving the resource",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "error_prefix_not_found_404"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "internal",
+        "recommended_next_action": "stop",
+        "recoverable_by_model": false,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "Error: internal error 500 from upstream",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "error_prefix_internal"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "unknown",
+        "recommended_next_action": "try_alternative",
+        "recoverable_by_model": true,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "Error: something unclassifiable happened",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "error_prefix_unknown"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "unknown",
+        "recommended_next_action": "try_alternative",
+        "recoverable_by_model": true,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "Error: Tool 'grep' failed with ValueError: bad pattern. Continue with available context, or choose an alternative tool.",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "error_prefix_exception_shape"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "unknown",
+        "recommended_next_action": "try_alternative",
+        "recoverable_by_model": true,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "Error: request took 500ms to complete",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "numeric_code_not_word_boundary"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "not_found",
+        "recommended_next_action": "rewrite_query",
+        "recoverable_by_model": true,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "the requested file does not exist",
+        "pre_existing_meta": null,
+        "status": "error",
+        "tool_name": "generic_tool"
+      },
+      "name": "status_error_plain_text"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "rate_limited",
+        "recommended_next_action": "summarize",
+        "recoverable_by_model": false,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "{\"error\": \"rate limit exceeded\", \"query\": \"unauthorized\"}",
+        "pre_existing_meta": null,
+        "status": "error",
+        "tool_name": "generic_tool"
+      },
+      "name": "status_error_json_error_field"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "unknown",
+        "recommended_next_action": "try_alternative",
+        "recoverable_by_model": true,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "{\"user_id\": 401, \"results\": []}",
+        "pre_existing_meta": null,
+        "status": "error",
+        "tool_name": "generic_tool"
+      },
+      "name": "status_error_json_without_error_key"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "unknown",
+        "recommended_next_action": "try_alternative",
+        "recoverable_by_model": true,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "{\"error\": \"none\", \"results\": [1, 2]}",
+        "pre_existing_meta": null,
+        "status": "error",
+        "tool_name": "generic_tool"
+      },
+      "name": "status_error_json_semantic_zero"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "not_found",
+        "recommended_next_action": "rewrite_query",
+        "recoverable_by_model": true,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "{\"error\": 404}",
+        "pre_existing_meta": null,
+        "status": "error",
+        "tool_name": "generic_tool"
+      },
+      "name": "status_error_json_non_string_error"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "unknown",
+        "recommended_next_action": "try_alternative",
+        "recoverable_by_model": true,
+        "source": "tool_return",
+        "status": "error"
+      },
+      "input": {
+        "content": "{\"error\": \"boom\"}",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "success_json_error_field"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": null,
+        "recommended_next_action": "continue",
+        "recoverable_by_model": true,
+        "source": "content_analysis",
+        "status": "success"
+      },
+      "input": {
+        "content": "{\"error\": \"none\", \"results\": [1, 2]}",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "success_json_error_none_is_success"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": null,
+        "recommended_next_action": "continue",
+        "recoverable_by_model": true,
+        "source": "content_analysis",
+        "status": "success"
+      },
+      "input": {
+        "content": "{\"error\": \"\", \"results\": []}",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "success_json_error_empty_string_is_success"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "not_found",
+        "recommended_next_action": "rewrite_query",
+        "recoverable_by_model": true,
+        "source": "content_analysis",
+        "status": "error"
+      },
+      "input": {
+        "content": "404 Not Found\nnginx/1.24.0",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "web_fetch"
+      },
+      "name": "web_fetch_shell_404"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "not_found",
+        "recommended_next_action": "rewrite_query",
+        "recoverable_by_model": true,
+        "source": "content_analysis",
+        "status": "error"
+      },
+      "input": {
+        "content": "404 - File or directory not found.\nIIS",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "web_fetch"
+      },
+      "name": "web_fetch_shell_iis_404"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "not_found",
+        "recommended_next_action": "rewrite_query",
+        "recoverable_by_model": true,
+        "source": "content_analysis",
+        "status": "error"
+      },
+      "input": {
+        "content": "HTTP Error 404 - Not Found",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "web_fetch"
+      },
+      "name": "web_fetch_shell_http_error_404"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "transient",
+        "recommended_next_action": "try_alternative",
+        "recoverable_by_model": false,
+        "source": "content_analysis",
+        "status": "error"
+      },
+      "input": {
+        "content": "503 Service Unavailable\nvarnish",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "web_fetch"
+      },
+      "name": "web_fetch_shell_503"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "auth",
+        "recommended_next_action": "stop",
+        "recoverable_by_model": false,
+        "source": "content_analysis",
+        "status": "error"
+      },
+      "input": {
+        "content": "401 Unauthorized",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "web_fetch"
+      },
+      "name": "web_fetch_shell_401"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": null,
+        "recommended_next_action": "continue",
+        "recoverable_by_model": true,
+        "source": "content_analysis",
+        "status": "success"
+      },
+      "input": {
+        "content": "404 Ways to Cook Rice\nA long article about rice.",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "web_fetch"
+      },
+      "name": "web_fetch_document_about_404_is_success"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": null,
+        "recommended_next_action": "continue",
+        "recoverable_by_model": true,
+        "source": "content_analysis",
+        "status": "success"
+      },
+      "input": {
+        "content": "Not Found: a short history of the 404\nBody text.",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "web_fetch"
+      },
+      "name": "web_fetch_document_titled_not_found_is_success"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": null,
+        "recommended_next_action": "continue",
+        "recoverable_by_model": true,
+        "source": "content_analysis",
+        "status": "success"
+      },
+      "input": {
+        "content": "404 Not Found\nnginx/1.24.0",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "read_file"
+      },
+      "name": "error_shell_gate_is_name_based"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": null,
+        "recommended_next_action": "rewrite_query",
+        "recoverable_by_model": true,
+        "source": "content_analysis",
+        "status": "partial_success"
+      },
+      "input": {
+        "content": "Output truncated after 100 lines",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "partial_truncated"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": null,
+        "recommended_next_action": "rewrite_query",
+        "recoverable_by_model": true,
+        "source": "content_analysis",
+        "status": "partial_success"
+      },
+      "input": {
+        "content": "partial results returned for this query",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "partial_results"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": null,
+        "recommended_next_action": "rewrite_query",
+        "recoverable_by_model": true,
+        "source": "content_analysis",
+        "status": "partial_success"
+      },
+      "input": {
+        "content": "no results found for the given query",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "partial_no_results_found"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": null,
+        "recommended_next_action": "rewrite_query",
+        "recoverable_by_model": true,
+        "source": "content_analysis",
+        "status": "partial_success"
+      },
+      "input": {
+        "content": "no content found at that location",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "partial_no_content_found"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": null,
+        "recommended_next_action": "rewrite_query",
+        "recoverable_by_model": true,
+        "source": "content_analysis",
+        "status": "partial_success"
+      },
+      "input": {
+        "content": "no images found",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "partial_no_images_found"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": null,
+        "recommended_next_action": "rewrite_query",
+        "recoverable_by_model": true,
+        "source": "content_analysis",
+        "status": "partial_success"
+      },
+      "input": {
+        "content": "results may be incomplete",
+        "pre_existing_meta": null,
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "partial_results_may_be_incomplete"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": null,
+        "recommended_next_action": "continue",
+        "recoverable_by_model": true,
+        "source": "tool_return",
+        "status": "success"
+      },
+      "input": {
+        "content": "Error: 401 unauthorized",
+        "pre_existing_meta": {
+          "error_type": null,
+          "recommended_next_action": "continue",
+          "recoverable_by_model": true,
+          "source": "tool_return",
+          "status": "success"
+        },
+        "status": "success",
+        "tool_name": "generic_tool"
+      },
+      "name": "pre_existing_stamp_preserved"
+    }
+  ],
+  "stamp_exception_meta_cases": [
+    {
+      "deerflow_tool_meta": {
+        "error_type": "not_found",
+        "recommended_next_action": "rewrite_query",
+        "recoverable_by_model": true,
+        "source": "exception",
+        "status": "error"
+      },
+      "input": {
+        "exc_info": "Tool 'read_file' failed with FileNotFoundError: no such file or directory: /tmp/x"
+      },
+      "name": "exception_not_found"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "permission",
+        "recommended_next_action": "try_alternative",
+        "recoverable_by_model": true,
+        "source": "exception",
+        "status": "error"
+      },
+      "input": {
+        "exc_info": "Tool 'bash' failed with PermissionError: permission denied"
+      },
+      "name": "exception_permission"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "transient",
+        "recommended_next_action": "try_alternative",
+        "recoverable_by_model": false,
+        "source": "exception",
+        "status": "error"
+      },
+      "input": {
+        "exc_info": "Tool 'web_fetch' failed with TimeoutError: connection timeout"
+      },
+      "name": "exception_timeout"
+    },
+    {
+      "deerflow_tool_meta": {
+        "error_type": "unknown",
+        "recommended_next_action": "try_alternative",
+        "recoverable_by_model": true,
+        "source": "exception",
+        "status": "error"
+      },
+      "input": {
+        "exc_info": "Tool 'task' failed with RuntimeError: kaboom"
+      },
+      "name": "exception_unknown"
+    }
+  ]
+}

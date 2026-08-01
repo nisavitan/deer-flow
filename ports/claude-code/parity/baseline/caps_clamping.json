@@ -1,0 +1,290 @@
+{
+  "_provenance": {
+    "commit": "0950924",
+    "extracted_by": "ports/claude-code/parity/baseline/extract_vectors.py",
+    "group": "G5",
+    "method": "executed the original engine functions/classes listed in source_symbols",
+    "note": "`None` inputs are recorded with the real exception class name rather than a fabricated clamped value.",
+    "source_symbols": [
+      "deerflow.config.subagents_config:clamp_subagent_concurrency",
+      "deerflow.config.subagents_config:clamp_total_subagents_per_run",
+      "deerflow.agents.middlewares.subagent_limit_middleware:SubagentLimitMiddleware.__init__",
+      "deerflow.agents.middlewares.subagent_limit_middleware:SubagentLimitMiddleware._truncate_task_calls"
+    ]
+  },
+  "allowed_this_response": [
+    {
+      "allowed_task_calls": 1,
+      "configured_max_concurrent": 3,
+      "configured_max_total": 6,
+      "limit_note_appended": false,
+      "message_content": null,
+      "middleware_returned_update": false,
+      "prior_current_run_delegations": 0,
+      "requested_task_calls": 1,
+      "stop_reason": null
+    },
+    {
+      "allowed_task_calls": 3,
+      "configured_max_concurrent": 3,
+      "configured_max_total": 6,
+      "limit_note_appended": false,
+      "message_content": null,
+      "middleware_returned_update": false,
+      "prior_current_run_delegations": 0,
+      "requested_task_calls": 3,
+      "stop_reason": null
+    },
+    {
+      "allowed_task_calls": 3,
+      "configured_max_concurrent": 3,
+      "configured_max_total": 6,
+      "limit_note_appended": false,
+      "message_content": "dispatching",
+      "middleware_returned_update": true,
+      "prior_current_run_delegations": 0,
+      "requested_task_calls": 8,
+      "stop_reason": null
+    },
+    {
+      "allowed_task_calls": 2,
+      "configured_max_concurrent": 3,
+      "configured_max_total": 6,
+      "limit_note_appended": false,
+      "message_content": "dispatching",
+      "middleware_returned_update": true,
+      "prior_current_run_delegations": 4,
+      "requested_task_calls": 3,
+      "stop_reason": null
+    },
+    {
+      "allowed_task_calls": 1,
+      "configured_max_concurrent": 3,
+      "configured_max_total": 6,
+      "limit_note_appended": false,
+      "message_content": "dispatching",
+      "middleware_returned_update": true,
+      "prior_current_run_delegations": 5,
+      "requested_task_calls": 3,
+      "stop_reason": null
+    },
+    {
+      "allowed_task_calls": 0,
+      "configured_max_concurrent": 3,
+      "configured_max_total": 6,
+      "limit_note_appended": true,
+      "message_content": "dispatching\n\n[SUBAGENT LIMIT REACHED] The subagent delegation limit for this run has been reached. Continue using the subagent results already collected, execute remaining simple work directly, or summarize the remaining work instead of launching more subagents.",
+      "middleware_returned_update": true,
+      "prior_current_run_delegations": 6,
+      "requested_task_calls": 2,
+      "stop_reason": "subagent_limit_capped"
+    },
+    {
+      "allowed_task_calls": 0,
+      "configured_max_concurrent": 3,
+      "configured_max_total": 6,
+      "limit_note_appended": true,
+      "message_content": "dispatching\n\n[SUBAGENT LIMIT REACHED] The subagent delegation limit for this run has been reached. Continue using the subagent results already collected, execute remaining simple work directly, or summarize the remaining work instead of launching more subagents.",
+      "middleware_returned_update": true,
+      "prior_current_run_delegations": 9,
+      "requested_task_calls": 1,
+      "stop_reason": "subagent_limit_capped"
+    },
+    {
+      "allowed_task_calls": 1,
+      "configured_max_concurrent": 1,
+      "configured_max_total": 6,
+      "limit_note_appended": false,
+      "message_content": "dispatching",
+      "middleware_returned_update": true,
+      "prior_current_run_delegations": 0,
+      "requested_task_calls": 4,
+      "stop_reason": null
+    },
+    {
+      "allowed_task_calls": 4,
+      "configured_max_concurrent": 4,
+      "configured_max_total": 50,
+      "limit_note_appended": false,
+      "message_content": "dispatching",
+      "middleware_returned_update": true,
+      "prior_current_run_delegations": 0,
+      "requested_task_calls": 8,
+      "stop_reason": null
+    }
+  ],
+  "max_concurrent_subagents_clamp": [
+    {
+      "effective": 1,
+      "error": null,
+      "input": -1
+    },
+    {
+      "effective": 1,
+      "error": null,
+      "input": 0
+    },
+    {
+      "effective": 1,
+      "error": null,
+      "input": 1
+    },
+    {
+      "effective": 3,
+      "error": null,
+      "input": 3
+    },
+    {
+      "effective": 4,
+      "error": null,
+      "input": 4
+    },
+    {
+      "effective": 4,
+      "error": null,
+      "input": 5
+    },
+    {
+      "effective": 4,
+      "error": null,
+      "input": 10
+    },
+    {
+      "effective": 4,
+      "error": null,
+      "input": 50
+    },
+    {
+      "effective": 4,
+      "error": null,
+      "input": 51
+    },
+    {
+      "effective": null,
+      "error": "TypeError",
+      "input": null
+    }
+  ],
+  "max_total_subagents_clamp": [
+    {
+      "effective": 1,
+      "error": null,
+      "input": -1
+    },
+    {
+      "effective": 1,
+      "error": null,
+      "input": 0
+    },
+    {
+      "effective": 1,
+      "error": null,
+      "input": 1
+    },
+    {
+      "effective": 3,
+      "error": null,
+      "input": 3
+    },
+    {
+      "effective": 4,
+      "error": null,
+      "input": 4
+    },
+    {
+      "effective": 5,
+      "error": null,
+      "input": 5
+    },
+    {
+      "effective": 10,
+      "error": null,
+      "input": 10
+    },
+    {
+      "effective": 50,
+      "error": null,
+      "input": 50
+    },
+    {
+      "effective": 50,
+      "error": null,
+      "input": 51
+    },
+    {
+      "effective": null,
+      "error": "TypeError",
+      "input": null
+    }
+  ],
+  "middleware_constructor": [
+    {
+      "effective_max_concurrent": 1,
+      "effective_max_total": 1,
+      "error": null,
+      "input": -1
+    },
+    {
+      "effective_max_concurrent": 1,
+      "effective_max_total": 1,
+      "error": null,
+      "input": 0
+    },
+    {
+      "effective_max_concurrent": 1,
+      "effective_max_total": 1,
+      "error": null,
+      "input": 1
+    },
+    {
+      "effective_max_concurrent": 3,
+      "effective_max_total": 3,
+      "error": null,
+      "input": 3
+    },
+    {
+      "effective_max_concurrent": 4,
+      "effective_max_total": 4,
+      "error": null,
+      "input": 4
+    },
+    {
+      "effective_max_concurrent": 4,
+      "effective_max_total": 5,
+      "error": null,
+      "input": 5
+    },
+    {
+      "effective_max_concurrent": 4,
+      "effective_max_total": 10,
+      "error": null,
+      "input": 10
+    },
+    {
+      "effective_max_concurrent": 4,
+      "effective_max_total": 50,
+      "error": null,
+      "input": 50
+    },
+    {
+      "effective_max_concurrent": 4,
+      "effective_max_total": 50,
+      "error": null,
+      "input": 51
+    },
+    {
+      "effective_max_concurrent": null,
+      "effective_max_total": null,
+      "error": "TypeError",
+      "input": null
+    }
+  ],
+  "missing_run_id": {
+    "allowed_task_calls": 0,
+    "description": "No run_id in runtime context: every ledger entry counts as prior usage (fail-restrictive).",
+    "limit_note_appended": true,
+    "prior_ledger_entries": 6,
+    "requested_task_calls": 1,
+    "stop_reason": "subagent_limit_capped"
+  }
+}

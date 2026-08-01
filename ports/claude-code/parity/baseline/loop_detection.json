@@ -1,0 +1,2473 @@
+{
+  "_provenance": {
+    "commit": "0950924",
+    "extracted_by": "ports/claude-code/parity/baseline/extract_vectors.py",
+    "group": "G1",
+    "method": "executed the original engine functions/classes listed in source_symbols",
+    "note": "Warnings are queued by _apply and injected at the next model call; `injected_message` for a warn step is the queued text verbatim. For a hard stop it is the rewritten AIMessage content (original content was empty, so it starts with two newlines).",
+    "source_symbols": [
+      "deerflow.agents.middlewares.loop_detection_middleware:LoopDetectionMiddleware._apply",
+      "deerflow.agents.middlewares.loop_detection_middleware:LoopDetectionMiddleware._track_and_check",
+      "deerflow.agents.middlewares.loop_detection_middleware:_hash_tool_calls",
+      "deerflow.config.loop_detection_config:LoopDetectionConfig"
+    ]
+  },
+  "config_defaults": {
+    "enabled": true,
+    "hard_limit": 5,
+    "max_tracked_threads": 100,
+    "tool_freq_hard_limit": 50,
+    "tool_freq_overrides": {},
+    "tool_freq_warn": 30,
+    "warn_threshold": 3,
+    "window_size": 20
+  },
+  "hash_relations": [
+    {
+      "left": [
+        {
+          "args": {
+            "path": "/s",
+            "pattern": "x"
+          },
+          "name": "grep"
+        }
+      ],
+      "left_hash": "843c61a5801f",
+      "name": "same_calls_same_hash",
+      "relation": "equal",
+      "right": [
+        {
+          "args": {
+            "path": "/s",
+            "pattern": "x"
+          },
+          "name": "grep"
+        }
+      ],
+      "right_hash": "843c61a5801f"
+    },
+    {
+      "left": [
+        {
+          "args": {
+            "path": "/1"
+          },
+          "name": "a"
+        },
+        {
+          "args": {
+            "path": "/2"
+          },
+          "name": "b"
+        }
+      ],
+      "left_hash": "79f216df0544",
+      "name": "order_independent",
+      "relation": "equal",
+      "right": [
+        {
+          "args": {
+            "path": "/2"
+          },
+          "name": "b"
+        },
+        {
+          "args": {
+            "path": "/1"
+          },
+          "name": "a"
+        }
+      ],
+      "right_hash": "79f216df0544"
+    },
+    {
+      "left": [
+        {
+          "args": {
+            "pattern": "x"
+          },
+          "name": "grep"
+        }
+      ],
+      "left_hash": "e46b268cf6e7",
+      "name": "stringified_dict_args_match_dict_args",
+      "relation": "equal",
+      "right": [
+        {
+          "args": "{\"pattern\": \"x\"}",
+          "name": "grep"
+        }
+      ],
+      "right_hash": "e46b268cf6e7"
+    },
+    {
+      "left": [
+        {
+          "args": {
+            "end_line": 100,
+            "path": "/a",
+            "start_line": 1
+          },
+          "name": "read_file"
+        }
+      ],
+      "left_hash": "8a705237b54e",
+      "name": "reversed_read_file_range_matches_forward_range",
+      "relation": "equal",
+      "right": [
+        {
+          "args": {
+            "end_line": 1,
+            "path": "/a",
+            "start_line": 100
+          },
+          "name": "read_file"
+        }
+      ],
+      "right_hash": "8a705237b54e"
+    },
+    {
+      "left": [
+        {
+          "args": {
+            "pattern": "x"
+          },
+          "name": "grep"
+        }
+      ],
+      "left_hash": "e46b268cf6e7",
+      "name": "grep_pattern_affects_hash",
+      "relation": "not_equal",
+      "right": [
+        {
+          "args": {
+            "pattern": "y"
+          },
+          "name": "grep"
+        }
+      ],
+      "right_hash": "ad521ae5af3d"
+    },
+    {
+      "left": [
+        {
+          "args": {
+            "content": "one",
+            "path": "/a"
+          },
+          "name": "write_file"
+        }
+      ],
+      "left_hash": "cc72c1e5f31e",
+      "name": "write_file_content_affects_hash",
+      "relation": "not_equal",
+      "right": [
+        {
+          "args": {
+            "content": "two",
+            "path": "/a"
+          },
+          "name": "write_file"
+        }
+      ],
+      "right_hash": "30fec93d46eb"
+    },
+    {
+      "left": [
+        {
+          "args": {
+            "new_str": "y",
+            "old_str": "x",
+            "path": "/a"
+          },
+          "name": "str_replace"
+        }
+      ],
+      "left_hash": "608a8931c362",
+      "name": "str_replace_content_affects_hash",
+      "relation": "not_equal",
+      "right": [
+        {
+          "args": {
+            "new_str": "z",
+            "old_str": "x",
+            "path": "/a"
+          },
+          "name": "str_replace"
+        }
+      ],
+      "right_hash": "fb3a83159af0"
+    },
+    {
+      "left": [
+        {
+          "args": {
+            "limit": 5,
+            "query": "q"
+          },
+          "name": "search"
+        }
+      ],
+      "left_hash": "5a5069aab9e9",
+      "name": "non_salient_field_ignored",
+      "relation": "equal",
+      "right": [
+        {
+          "args": {
+            "limit": 50,
+            "query": "q"
+          },
+          "name": "search"
+        }
+      ],
+      "right_hash": "5a5069aab9e9"
+    },
+    {
+      "left": [
+        {
+          "args": {
+            "end_line": 100,
+            "path": "/a",
+            "start_line": 1
+          },
+          "name": "read_file"
+        }
+      ],
+      "left_hash": "8a705237b54e",
+      "name": "read_file_far_ranges_differ",
+      "relation": "not_equal",
+      "right": [
+        {
+          "args": {
+            "end_line": 500,
+            "path": "/a",
+            "start_line": 401
+          },
+          "name": "read_file"
+        }
+      ],
+      "right_hash": "7f3fbba9104d"
+    }
+  ],
+  "scenarios": {
+    "hash_layer_priority": {
+      "description": "Identical calls hard stop at 5 even though the frequency counter is far below its own thresholds.",
+      "steps": [
+        {
+          "call_hash": "c3b25109b465",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 1,
+          "injected_message": null,
+          "step": 1,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 1
+          }
+        },
+        {
+          "call_hash": "c3b25109b465",
+          "decision": "none",
+          "hash_count_in_window": 2,
+          "hash_window_length": 2,
+          "injected_message": null,
+          "step": 2,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 2
+          }
+        },
+        {
+          "call_hash": "c3b25109b465",
+          "decision": "warn",
+          "hash_count_in_window": 3,
+          "hash_window_length": 3,
+          "injected_message": "[LOOP DETECTED] You are repeating the same tool calls. Stop calling tools and produce your final answer now. If you cannot complete the task, summarize what you accomplished so far.",
+          "step": 3,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 2
+          }
+        },
+        {
+          "call_hash": "c3b25109b465",
+          "decision": "none",
+          "hash_count_in_window": 4,
+          "hash_window_length": 4,
+          "injected_message": null,
+          "step": 4,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 3
+          }
+        },
+        {
+          "call_hash": "c3b25109b465",
+          "consumable_stop_reason": "loop_capped",
+          "decision": "hard_stop",
+          "finish_reason": null,
+          "hash_count_in_window": 5,
+          "hash_window_length": 5,
+          "injected_message": "\n\n[FORCED STOP] Repeated tool calls exceeded the safety limit. Producing final answer with results collected so far.",
+          "step": 5,
+          "stop_reason": "loop_capped",
+          "stripped_tool_calls": [],
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 3
+          }
+        }
+      ]
+    },
+    "identical_calls_warn3_hard5": {
+      "description": "Byte-identical tool_calls repeated 6 times under default thresholds (warn 3 / hard 5).",
+      "steps": [
+        {
+          "call_hash": "c3b25109b465",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 1,
+          "injected_message": null,
+          "step": 1,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 1
+          }
+        },
+        {
+          "call_hash": "c3b25109b465",
+          "decision": "none",
+          "hash_count_in_window": 2,
+          "hash_window_length": 2,
+          "injected_message": null,
+          "step": 2,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 2
+          }
+        },
+        {
+          "call_hash": "c3b25109b465",
+          "decision": "warn",
+          "hash_count_in_window": 3,
+          "hash_window_length": 3,
+          "injected_message": "[LOOP DETECTED] You are repeating the same tool calls. Stop calling tools and produce your final answer now. If you cannot complete the task, summarize what you accomplished so far.",
+          "step": 3,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 2
+          }
+        },
+        {
+          "call_hash": "c3b25109b465",
+          "decision": "none",
+          "hash_count_in_window": 4,
+          "hash_window_length": 4,
+          "injected_message": null,
+          "step": 4,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 3
+          }
+        },
+        {
+          "call_hash": "c3b25109b465",
+          "consumable_stop_reason": "loop_capped",
+          "decision": "hard_stop",
+          "finish_reason": null,
+          "hash_count_in_window": 5,
+          "hash_window_length": 5,
+          "injected_message": "\n\n[FORCED STOP] Repeated tool calls exceeded the safety limit. Producing final answer with results collected so far.",
+          "step": 5,
+          "stop_reason": "loop_capped",
+          "stripped_tool_calls": [],
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 3
+          }
+        },
+        {
+          "call_hash": "c3b25109b465",
+          "consumable_stop_reason": "loop_capped",
+          "decision": "hard_stop",
+          "finish_reason": null,
+          "hash_count_in_window": 6,
+          "hash_window_length": 6,
+          "injected_message": "\n\n[FORCED STOP] Repeated tool calls exceeded the safety limit. Producing final answer with results collected so far.",
+          "step": 6,
+          "stop_reason": "loop_capped",
+          "stripped_tool_calls": [],
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 3
+          }
+        }
+      ]
+    },
+    "order_independent_pair": {
+      "description": "Same multiset of tool calls in reversed order must hash identically and therefore accumulate on one counter.",
+      "steps": [
+        {
+          "call_hash": "7fabe13a391f",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 1,
+          "injected_message": null,
+          "step": 1,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "pattern": "a"
+              },
+              "name": "grep"
+            },
+            {
+              "args": {
+                "path": "/x.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 1,
+            "read_file": 1
+          }
+        },
+        {
+          "call_hash": "7fabe13a391f",
+          "decision": "none",
+          "hash_count_in_window": 2,
+          "hash_window_length": 2,
+          "injected_message": null,
+          "step": 2,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/x.py"
+              },
+              "name": "read_file"
+            },
+            {
+              "args": {
+                "pattern": "a"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 2,
+            "read_file": 2
+          }
+        },
+        {
+          "call_hash": "7fabe13a391f",
+          "decision": "warn",
+          "hash_count_in_window": 3,
+          "hash_window_length": 3,
+          "injected_message": "[LOOP DETECTED] You are repeating the same tool calls. Stop calling tools and produce your final answer now. If you cannot complete the task, summarize what you accomplished so far.",
+          "step": 3,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "pattern": "a"
+              },
+              "name": "grep"
+            },
+            {
+              "args": {
+                "path": "/x.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 2,
+            "read_file": 2
+          }
+        },
+        {
+          "call_hash": "7fabe13a391f",
+          "decision": "none",
+          "hash_count_in_window": 4,
+          "hash_window_length": 4,
+          "injected_message": null,
+          "step": 4,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/x.py"
+              },
+              "name": "read_file"
+            },
+            {
+              "args": {
+                "pattern": "a"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 3,
+            "read_file": 3
+          }
+        },
+        {
+          "call_hash": "7fabe13a391f",
+          "consumable_stop_reason": "loop_capped",
+          "decision": "hard_stop",
+          "finish_reason": null,
+          "hash_count_in_window": 5,
+          "hash_window_length": 5,
+          "injected_message": "\n\n[FORCED STOP] Repeated tool calls exceeded the safety limit. Producing final answer with results collected so far.",
+          "step": 5,
+          "stop_reason": "loop_capped",
+          "stripped_tool_calls": [],
+          "tool_calls": [
+            {
+              "args": {
+                "pattern": "a"
+              },
+              "name": "grep"
+            },
+            {
+              "args": {
+                "path": "/x.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 3,
+            "read_file": 3
+          }
+        }
+      ]
+    },
+    "read_file_range_bucketing": {
+      "description": "read_file ranges inside the same 200-line bucket collapse to one hash (hard stop at the 5th); a different bucket does not.",
+      "steps": [
+        {
+          "call_hash": "381cd331762d",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 1,
+          "injected_message": null,
+          "step": 1,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "end_line": 100,
+                "path": "/a.py",
+                "start_line": 1
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 1
+          }
+        },
+        {
+          "call_hash": "381cd331762d",
+          "decision": "none",
+          "hash_count_in_window": 2,
+          "hash_window_length": 2,
+          "injected_message": null,
+          "step": 2,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "end_line": 150,
+                "path": "/a.py",
+                "start_line": 50
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 2
+          }
+        },
+        {
+          "call_hash": "381cd331762d",
+          "decision": "warn",
+          "hash_count_in_window": 3,
+          "hash_window_length": 3,
+          "injected_message": "[LOOP DETECTED] You are repeating the same tool calls. Stop calling tools and produce your final answer now. If you cannot complete the task, summarize what you accomplished so far.",
+          "step": 3,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "end_line": 200,
+                "path": "/a.py",
+                "start_line": 100
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 2
+          }
+        },
+        {
+          "call_hash": "381cd331762d",
+          "decision": "none",
+          "hash_count_in_window": 4,
+          "hash_window_length": 4,
+          "injected_message": null,
+          "step": 4,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "end_line": 90,
+                "path": "/a.py",
+                "start_line": 2
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 3
+          }
+        },
+        {
+          "call_hash": "381cd331762d",
+          "consumable_stop_reason": "loop_capped",
+          "decision": "hard_stop",
+          "finish_reason": null,
+          "hash_count_in_window": 5,
+          "hash_window_length": 5,
+          "injected_message": "\n\n[FORCED STOP] Repeated tool calls exceeded the safety limit. Producing final answer with results collected so far.",
+          "step": 5,
+          "stop_reason": "loop_capped",
+          "stripped_tool_calls": [],
+          "tool_calls": [
+            {
+              "args": {
+                "end_line": 20,
+                "path": "/a.py",
+                "start_line": 10
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 3
+          }
+        },
+        {
+          "call_hash": "597a64bcfcb3",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 6,
+          "injected_message": null,
+          "step": 6,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "end_line": 500,
+                "path": "/a.py",
+                "start_line": 401
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 4
+          }
+        }
+      ]
+    },
+    "tool_frequency_warn30_hard50": {
+      "boundary_steps": {
+        "29": {
+          "call_hash": "1c980bf80a7c",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 29,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_28.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 29
+          }
+        },
+        "30": {
+          "call_hash": "4e7145901ad7",
+          "decision": "warn",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": "[LOOP DETECTED] You have called read_file 30 times without producing a final answer. Stop calling tools and produce your final answer now. If you cannot complete the task, summarize what you accomplished so far.",
+          "step": 30,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_29.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 30
+          }
+        },
+        "31": {
+          "call_hash": "55c12fc7c65b",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 31,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_30.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 31
+          }
+        },
+        "49": {
+          "call_hash": "f01e9dec92fd",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 49,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_48.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 49
+          }
+        },
+        "50": {
+          "call_hash": "11d395c13226",
+          "consumable_stop_reason": "loop_capped",
+          "decision": "hard_stop",
+          "finish_reason": null,
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": "\n\n[FORCED STOP] Tool read_file called 50 times — exceeded the per-tool safety limit. Producing final answer with results collected so far.",
+          "step": 50,
+          "stop_reason": "loop_capped",
+          "stripped_tool_calls": [],
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_49.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 50
+          }
+        }
+      },
+      "description": "Single tool type with varying args, 50 calls. Frequency layer warns at 30 and hard stops at 50; the hash layer never fires.",
+      "steps": [
+        {
+          "call_hash": "b2a5f433a64b",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 1,
+          "injected_message": null,
+          "step": 1,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_0.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 1
+          }
+        },
+        {
+          "call_hash": "8f8f5e028587",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 2,
+          "injected_message": null,
+          "step": 2,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_1.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 2
+          }
+        },
+        {
+          "call_hash": "b878f430da60",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 3,
+          "injected_message": null,
+          "step": 3,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_2.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 3
+          }
+        },
+        {
+          "call_hash": "ebaa3759dba8",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 4,
+          "injected_message": null,
+          "step": 4,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_3.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 4
+          }
+        },
+        {
+          "call_hash": "cafc6b7a261c",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 5,
+          "injected_message": null,
+          "step": 5,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_4.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 5
+          }
+        },
+        {
+          "call_hash": "66e593cdc94e",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 6,
+          "injected_message": null,
+          "step": 6,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_5.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 6
+          }
+        },
+        {
+          "call_hash": "1b5fa786737b",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 7,
+          "injected_message": null,
+          "step": 7,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_6.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 7
+          }
+        },
+        {
+          "call_hash": "ef214e17c3be",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 8,
+          "injected_message": null,
+          "step": 8,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_7.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 8
+          }
+        },
+        {
+          "call_hash": "2e90d88e6491",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 9,
+          "injected_message": null,
+          "step": 9,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_8.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 9
+          }
+        },
+        {
+          "call_hash": "859aed59948b",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 10,
+          "injected_message": null,
+          "step": 10,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_9.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 10
+          }
+        },
+        {
+          "call_hash": "444f56b5167c",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 11,
+          "injected_message": null,
+          "step": 11,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_10.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 11
+          }
+        },
+        {
+          "call_hash": "9bfb2eb13577",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 12,
+          "injected_message": null,
+          "step": 12,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_11.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 12
+          }
+        },
+        {
+          "call_hash": "1b32fd72c10b",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 13,
+          "injected_message": null,
+          "step": 13,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_12.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 13
+          }
+        },
+        {
+          "call_hash": "b1e50246efdd",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 14,
+          "injected_message": null,
+          "step": 14,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_13.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 14
+          }
+        },
+        {
+          "call_hash": "3022a93373f1",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 15,
+          "injected_message": null,
+          "step": 15,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_14.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 15
+          }
+        },
+        {
+          "call_hash": "5d593fdab085",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 16,
+          "injected_message": null,
+          "step": 16,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_15.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 16
+          }
+        },
+        {
+          "call_hash": "3d287446abc1",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 17,
+          "injected_message": null,
+          "step": 17,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_16.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 17
+          }
+        },
+        {
+          "call_hash": "7d969338bbcc",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 18,
+          "injected_message": null,
+          "step": 18,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_17.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 18
+          }
+        },
+        {
+          "call_hash": "87c19a560c10",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 19,
+          "injected_message": null,
+          "step": 19,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_18.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 19
+          }
+        },
+        {
+          "call_hash": "21e475001795",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 20,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_19.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 20
+          }
+        },
+        {
+          "call_hash": "1affd770844b",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 21,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_20.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 21
+          }
+        },
+        {
+          "call_hash": "42fc8192bc43",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 22,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_21.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 22
+          }
+        },
+        {
+          "call_hash": "b3cdc5e51715",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 23,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_22.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 23
+          }
+        },
+        {
+          "call_hash": "8c9c9d4b247a",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 24,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_23.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 24
+          }
+        },
+        {
+          "call_hash": "410904373ef4",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 25,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_24.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 25
+          }
+        },
+        {
+          "call_hash": "6562515f73f9",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 26,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_25.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 26
+          }
+        },
+        {
+          "call_hash": "4dc2ac62dd12",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 27,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_26.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 27
+          }
+        },
+        {
+          "call_hash": "098d2104f1f4",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 28,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_27.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 28
+          }
+        },
+        {
+          "call_hash": "1c980bf80a7c",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 29,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_28.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 29
+          }
+        },
+        {
+          "call_hash": "4e7145901ad7",
+          "decision": "warn",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": "[LOOP DETECTED] You have called read_file 30 times without producing a final answer. Stop calling tools and produce your final answer now. If you cannot complete the task, summarize what you accomplished so far.",
+          "step": 30,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_29.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 30
+          }
+        },
+        {
+          "call_hash": "55c12fc7c65b",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 31,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_30.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 31
+          }
+        },
+        {
+          "call_hash": "fc44c7394b3c",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 32,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_31.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 32
+          }
+        },
+        {
+          "call_hash": "f707d245e106",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 33,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_32.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 33
+          }
+        },
+        {
+          "call_hash": "da77cef3dc64",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 34,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_33.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 34
+          }
+        },
+        {
+          "call_hash": "bad9d77e94f3",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 35,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_34.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 35
+          }
+        },
+        {
+          "call_hash": "a252ff6df783",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 36,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_35.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 36
+          }
+        },
+        {
+          "call_hash": "9eab31a1b2bf",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 37,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_36.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 37
+          }
+        },
+        {
+          "call_hash": "77c81a209a81",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 38,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_37.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 38
+          }
+        },
+        {
+          "call_hash": "b9449fa67b76",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 39,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_38.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 39
+          }
+        },
+        {
+          "call_hash": "17c28f408c9a",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 40,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_39.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 40
+          }
+        },
+        {
+          "call_hash": "6d57869c2b11",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 41,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_40.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 41
+          }
+        },
+        {
+          "call_hash": "6645805efff0",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 42,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_41.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 42
+          }
+        },
+        {
+          "call_hash": "15d6bfddc23f",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 43,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_42.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 43
+          }
+        },
+        {
+          "call_hash": "6390c56da554",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 44,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_43.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 44
+          }
+        },
+        {
+          "call_hash": "1426c7c7bc90",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 45,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_44.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 45
+          }
+        },
+        {
+          "call_hash": "47673f412e9c",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 46,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_45.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 46
+          }
+        },
+        {
+          "call_hash": "132a7f54bbaa",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 47,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_46.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 47
+          }
+        },
+        {
+          "call_hash": "0e9adfcfdca7",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 48,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_47.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 48
+          }
+        },
+        {
+          "call_hash": "f01e9dec92fd",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 49,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_48.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 49
+          }
+        },
+        {
+          "call_hash": "11d395c13226",
+          "consumable_stop_reason": "loop_capped",
+          "decision": "hard_stop",
+          "finish_reason": null,
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": "\n\n[FORCED STOP] Tool read_file called 50 times — exceeded the per-tool safety limit. Producing final answer with results collected so far.",
+          "step": 50,
+          "stop_reason": "loop_capped",
+          "stripped_tool_calls": [],
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/file_49.py"
+              },
+              "name": "read_file"
+            }
+          ],
+          "tool_frequency_counts": {
+            "read_file": 50
+          }
+        }
+      ]
+    },
+    "window_sliding_20": {
+      "description": "Four identical calls (warn fires at 3, count reaches 4 without a hard stop), then 19 distinct calls so the 20-entry window decays all but one occurrence, then the identical call again: the count restarts from the surviving occurrence and the hard stop is deferred instead of firing on the next repeat.",
+      "steps": [
+        {
+          "call_hash": "c3b25109b465",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 1,
+          "injected_message": null,
+          "step": 1,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 1
+          }
+        },
+        {
+          "call_hash": "c3b25109b465",
+          "decision": "none",
+          "hash_count_in_window": 2,
+          "hash_window_length": 2,
+          "injected_message": null,
+          "step": 2,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 2
+          }
+        },
+        {
+          "call_hash": "c3b25109b465",
+          "decision": "warn",
+          "hash_count_in_window": 3,
+          "hash_window_length": 3,
+          "injected_message": "[LOOP DETECTED] You are repeating the same tool calls. Stop calling tools and produce your final answer now. If you cannot complete the task, summarize what you accomplished so far.",
+          "step": 3,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 2
+          }
+        },
+        {
+          "call_hash": "c3b25109b465",
+          "decision": "none",
+          "hash_count_in_window": 4,
+          "hash_window_length": 4,
+          "injected_message": null,
+          "step": 4,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 3
+          }
+        },
+        {
+          "call_hash": "0ce3c6ba434a",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 5,
+          "injected_message": null,
+          "step": 5,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P0"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 4
+          }
+        },
+        {
+          "call_hash": "4c8679c67fea",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 6,
+          "injected_message": null,
+          "step": 6,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P1"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 5
+          }
+        },
+        {
+          "call_hash": "8742e516539a",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 7,
+          "injected_message": null,
+          "step": 7,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P2"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 6
+          }
+        },
+        {
+          "call_hash": "046787485adb",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 8,
+          "injected_message": null,
+          "step": 8,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P3"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 7
+          }
+        },
+        {
+          "call_hash": "8c3e433130ed",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 9,
+          "injected_message": null,
+          "step": 9,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P4"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 8
+          }
+        },
+        {
+          "call_hash": "f036d9b6982d",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 10,
+          "injected_message": null,
+          "step": 10,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P5"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 9
+          }
+        },
+        {
+          "call_hash": "b756ab60a176",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 11,
+          "injected_message": null,
+          "step": 11,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P6"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 10
+          }
+        },
+        {
+          "call_hash": "b605be2344d3",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 12,
+          "injected_message": null,
+          "step": 12,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P7"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 11
+          }
+        },
+        {
+          "call_hash": "54b00fa09378",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 13,
+          "injected_message": null,
+          "step": 13,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P8"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 12
+          }
+        },
+        {
+          "call_hash": "54c978c84192",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 14,
+          "injected_message": null,
+          "step": 14,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P9"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 13
+          }
+        },
+        {
+          "call_hash": "f6f088475487",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 15,
+          "injected_message": null,
+          "step": 15,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P10"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 14
+          }
+        },
+        {
+          "call_hash": "77c4140afd28",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 16,
+          "injected_message": null,
+          "step": 16,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P11"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 15
+          }
+        },
+        {
+          "call_hash": "353f3e2ee570",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 17,
+          "injected_message": null,
+          "step": 17,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P12"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 16
+          }
+        },
+        {
+          "call_hash": "041076658522",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 18,
+          "injected_message": null,
+          "step": 18,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P13"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 17
+          }
+        },
+        {
+          "call_hash": "e3681060921e",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 19,
+          "injected_message": null,
+          "step": 19,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P14"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 18
+          }
+        },
+        {
+          "call_hash": "655fbd726833",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 20,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P15"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 19
+          }
+        },
+        {
+          "call_hash": "27c103c1e3fa",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 21,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P16"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 20
+          }
+        },
+        {
+          "call_hash": "c6a2b93f00fc",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 22,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P17"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 21
+          }
+        },
+        {
+          "call_hash": "a4cc1ce5f27c",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 23,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "P18"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 22
+          }
+        },
+        {
+          "call_hash": "c3b25109b465",
+          "decision": "none",
+          "hash_count_in_window": 1,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 24,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 23
+          }
+        },
+        {
+          "call_hash": "c3b25109b465",
+          "decision": "none",
+          "hash_count_in_window": 2,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 25,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 24
+          }
+        },
+        {
+          "call_hash": "c3b25109b465",
+          "decision": "none",
+          "hash_count_in_window": 3,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 26,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 25
+          }
+        },
+        {
+          "call_hash": "c3b25109b465",
+          "decision": "none",
+          "hash_count_in_window": 4,
+          "hash_window_length": 20,
+          "injected_message": null,
+          "step": 27,
+          "stop_reason": null,
+          "tool_calls": [
+            {
+              "args": {
+                "path": "/src",
+                "pattern": "TODO"
+              },
+              "name": "grep"
+            }
+          ],
+          "tool_frequency_counts": {
+            "grep": 26
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,642 @@
+{
+  "_pinned_fields": [
+    "goal.created_at",
+    "goal.updated_at",
+    "goal.last_evaluation.evaluated_at"
+  ],
+  "_provenance": {
+    "commit": "0950924",
+    "extracted_by": "ports/claude-code/parity/baseline/extract_vectors.py",
+    "group": "G6",
+    "method": "executed the original engine functions/classes listed in source_symbols",
+    "note": "Timestamps produced by now_iso() are replaced with the sentinel '<PINNED>'; created_at is injected as a fixed value.",
+    "source_symbols": [
+      "deerflow.runtime.goal:build_goal_state",
+      "deerflow.runtime.goal:should_continue_goal",
+      "deerflow.runtime.goal:compute_goal_progress_key",
+      "deerflow.runtime.goal:compute_no_progress_count",
+      "deerflow.runtime.goal:attach_goal_evaluation",
+      "deerflow.runtime.runs.worker:_stand_down_reason"
+    ]
+  },
+  "continuation_cap_clamping": [
+    {
+      "continuation_count": 0,
+      "effective_max_continuations": 0,
+      "effective_max_no_progress_continuations": 2,
+      "no_progress_count": 0,
+      "requested_max_continuations": -1
+    },
+    {
+      "continuation_count": 0,
+      "effective_max_continuations": 0,
+      "effective_max_no_progress_continuations": 2,
+      "no_progress_count": 0,
+      "requested_max_continuations": 0
+    },
+    {
+      "continuation_count": 0,
+      "effective_max_continuations": 5,
+      "effective_max_no_progress_continuations": 2,
+      "no_progress_count": 0,
+      "requested_max_continuations": 5
+    },
+    {
+      "continuation_count": 0,
+      "effective_max_continuations": 8,
+      "effective_max_no_progress_continuations": 2,
+      "no_progress_count": 0,
+      "requested_max_continuations": 8
+    },
+    {
+      "continuation_count": 0,
+      "effective_max_continuations": 8,
+      "effective_max_no_progress_continuations": 2,
+      "no_progress_count": 0,
+      "requested_max_continuations": 9
+    },
+    {
+      "continuation_count": 0,
+      "effective_max_continuations": 8,
+      "effective_max_no_progress_continuations": 2,
+      "no_progress_count": 0,
+      "requested_max_continuations": 20
+    }
+  ],
+  "continuation_cap_walk": [
+    {
+      "continuation_count_before": 0,
+      "should_continue_goal": true,
+      "stand_down_reason": null,
+      "turn": 1
+    },
+    {
+      "continuation_count_before": 1,
+      "should_continue_goal": true,
+      "stand_down_reason": null,
+      "turn": 2
+    },
+    {
+      "continuation_count_before": 2,
+      "should_continue_goal": true,
+      "stand_down_reason": null,
+      "turn": 3
+    },
+    {
+      "continuation_count_before": 3,
+      "should_continue_goal": true,
+      "stand_down_reason": null,
+      "turn": 4
+    },
+    {
+      "continuation_count_before": 4,
+      "should_continue_goal": true,
+      "stand_down_reason": null,
+      "turn": 5
+    },
+    {
+      "continuation_count_before": 5,
+      "should_continue_goal": true,
+      "stand_down_reason": null,
+      "turn": 6
+    },
+    {
+      "continuation_count_before": 6,
+      "should_continue_goal": true,
+      "stand_down_reason": null,
+      "turn": 7
+    },
+    {
+      "continuation_count_before": 7,
+      "should_continue_goal": true,
+      "stand_down_reason": null,
+      "turn": 8
+    },
+    {
+      "continuation_count_before": 8,
+      "should_continue_goal": false,
+      "stand_down_reason": "max_continuations_reached",
+      "turn": 9
+    },
+    {
+      "continuation_count_before": 8,
+      "should_continue_goal": false,
+      "stand_down_reason": "max_continuations_reached",
+      "turn": 10
+    }
+  ],
+  "gate_matrix": [
+    {
+      "continuation_count": 0,
+      "evaluation": {
+        "blocker": "goal_not_met_yet",
+        "evidence_summary": "e",
+        "reason": "r",
+        "satisfied": false
+      },
+      "max_continuations": 8,
+      "max_no_progress_continuations": 2,
+      "name": "not_satisfied_continuable_fresh",
+      "no_progress_count": 0,
+      "should_continue_goal": true,
+      "stand_down_reason": null
+    },
+    {
+      "continuation_count": 0,
+      "evaluation": {
+        "blocker": "none",
+        "evidence_summary": "e",
+        "reason": "r",
+        "satisfied": true
+      },
+      "max_continuations": 8,
+      "max_no_progress_continuations": 2,
+      "name": "satisfied_stops",
+      "no_progress_count": 0,
+      "should_continue_goal": false,
+      "stand_down_reason": null
+    },
+    {
+      "continuation_count": 0,
+      "evaluation": {
+        "blocker": "needs_user_input",
+        "evidence_summary": "e",
+        "reason": "r",
+        "satisfied": false
+      },
+      "max_continuations": 8,
+      "max_no_progress_continuations": 2,
+      "name": "blocked_needs_user_input",
+      "no_progress_count": 0,
+      "should_continue_goal": false,
+      "stand_down_reason": "blocked:needs_user_input"
+    },
+    {
+      "continuation_count": 0,
+      "evaluation": {
+        "blocker": "missing_evidence",
+        "evidence_summary": "e",
+        "reason": "r",
+        "satisfied": false
+      },
+      "max_continuations": 8,
+      "max_no_progress_continuations": 2,
+      "name": "blocked_missing_evidence",
+      "no_progress_count": 0,
+      "should_continue_goal": false,
+      "stand_down_reason": "blocked:missing_evidence"
+    },
+    {
+      "continuation_count": 0,
+      "evaluation": {
+        "blocker": "run_failed",
+        "evidence_summary": "e",
+        "reason": "r",
+        "satisfied": false
+      },
+      "max_continuations": 8,
+      "max_no_progress_continuations": 2,
+      "name": "blocked_run_failed",
+      "no_progress_count": 0,
+      "should_continue_goal": false,
+      "stand_down_reason": "blocked:run_failed"
+    },
+    {
+      "continuation_count": 0,
+      "evaluation": {
+        "blocker": "external_wait",
+        "evidence_summary": "e",
+        "reason": "r",
+        "satisfied": false
+      },
+      "max_continuations": 8,
+      "max_no_progress_continuations": 2,
+      "name": "blocked_external_wait",
+      "no_progress_count": 0,
+      "should_continue_goal": false,
+      "stand_down_reason": "blocked:external_wait"
+    },
+    {
+      "continuation_count": 7,
+      "evaluation": {
+        "blocker": "goal_not_met_yet",
+        "evidence_summary": "e",
+        "reason": "r",
+        "satisfied": false
+      },
+      "max_continuations": 8,
+      "max_no_progress_continuations": 2,
+      "name": "cap_not_reached_7_of_8",
+      "no_progress_count": 0,
+      "should_continue_goal": true,
+      "stand_down_reason": null
+    },
+    {
+      "continuation_count": 8,
+      "evaluation": {
+        "blocker": "goal_not_met_yet",
+        "evidence_summary": "e",
+        "reason": "r",
+        "satisfied": false
+      },
+      "max_continuations": 8,
+      "max_no_progress_continuations": 2,
+      "name": "cap_reached_8_of_8",
+      "no_progress_count": 0,
+      "should_continue_goal": false,
+      "stand_down_reason": "max_continuations_reached"
+    },
+    {
+      "continuation_count": 9,
+      "evaluation": {
+        "blocker": "goal_not_met_yet",
+        "evidence_summary": "e",
+        "reason": "r",
+        "satisfied": false
+      },
+      "max_continuations": 8,
+      "max_no_progress_continuations": 2,
+      "name": "cap_exceeded_9_of_8",
+      "no_progress_count": 0,
+      "should_continue_goal": false,
+      "stand_down_reason": "max_continuations_reached"
+    },
+    {
+      "continuation_count": 3,
+      "evaluation": {
+        "blocker": "goal_not_met_yet",
+        "evidence_summary": "e",
+        "reason": "r",
+        "satisfied": false
+      },
+      "max_continuations": 8,
+      "max_no_progress_continuations": 2,
+      "name": "no_progress_1_of_2",
+      "no_progress_count": 1,
+      "should_continue_goal": true,
+      "stand_down_reason": null
+    },
+    {
+      "continuation_count": 3,
+      "evaluation": {
+        "blocker": "goal_not_met_yet",
+        "evidence_summary": "e",
+        "reason": "r",
+        "satisfied": false
+      },
+      "max_continuations": 8,
+      "max_no_progress_continuations": 2,
+      "name": "no_progress_2_of_2",
+      "no_progress_count": 2,
+      "should_continue_goal": false,
+      "stand_down_reason": "no_progress_detected"
+    }
+  ],
+  "no_progress_cap_clamping": [
+    {
+      "effective_max_no_progress_continuations": 0,
+      "requested_max_no_progress_continuations": -1
+    },
+    {
+      "effective_max_no_progress_continuations": 0,
+      "requested_max_no_progress_continuations": 0
+    },
+    {
+      "effective_max_no_progress_continuations": 2,
+      "requested_max_no_progress_continuations": 2
+    },
+    {
+      "effective_max_no_progress_continuations": 5,
+      "requested_max_no_progress_continuations": 5
+    }
+  ],
+  "no_progress_sequences": [
+    {
+      "description": "Identical visible assistant evidence on every turn: the breaker trips on the third evaluation (no_progress_count reaches max 2).",
+      "name": "same_evidence_three_turns",
+      "steps": [
+        {
+          "continuation_count_after": 1,
+          "decision": "continue",
+          "evidence_signature": "sig-A",
+          "goal_after": {
+            "continuation_count": 1,
+            "created_at": "1970-01-01T00:00:00+00:00",
+            "last_evaluation": {
+              "blocker": "goal_not_met_yet",
+              "evaluated_at": "<PINNED>",
+              "evidence_summary": "e",
+              "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-A\", \"satisfied\": false}",
+              "reason": "turn 1 reworded reason",
+              "run_id": "run-1",
+              "satisfied": false
+            },
+            "max_continuations": 8,
+            "max_no_progress_continuations": 2,
+            "no_progress_count": 0,
+            "objective": "finish the audit",
+            "status": "active",
+            "updated_at": "<PINNED>"
+          },
+          "no_progress_count": 0,
+          "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-A\", \"satisfied\": false}",
+          "stand_down_reason": null,
+          "turn": 1
+        },
+        {
+          "continuation_count_after": 2,
+          "decision": "continue",
+          "evidence_signature": "sig-A",
+          "goal_after": {
+            "continuation_count": 2,
+            "created_at": "1970-01-01T00:00:00+00:00",
+            "last_evaluation": {
+              "blocker": "goal_not_met_yet",
+              "evaluated_at": "<PINNED>",
+              "evidence_summary": "e",
+              "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-A\", \"satisfied\": false}",
+              "reason": "turn 2 reworded reason",
+              "run_id": "run-2",
+              "satisfied": false
+            },
+            "max_continuations": 8,
+            "max_no_progress_continuations": 2,
+            "no_progress_count": 1,
+            "objective": "finish the audit",
+            "status": "active",
+            "updated_at": "<PINNED>"
+          },
+          "no_progress_count": 1,
+          "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-A\", \"satisfied\": false}",
+          "stand_down_reason": null,
+          "turn": 2
+        },
+        {
+          "continuation_count_after": 2,
+          "decision": "stand_down",
+          "evidence_signature": "sig-A",
+          "goal_after": {
+            "continuation_count": 2,
+            "created_at": "1970-01-01T00:00:00+00:00",
+            "last_evaluation": {
+              "blocker": "goal_not_met_yet",
+              "evaluated_at": "<PINNED>",
+              "evidence_summary": "e",
+              "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-A\", \"satisfied\": false}",
+              "reason": "turn 3 reworded reason",
+              "run_id": "run-3",
+              "satisfied": false,
+              "stand_down_reason": "no_progress_detected"
+            },
+            "max_continuations": 8,
+            "max_no_progress_continuations": 2,
+            "no_progress_count": 2,
+            "objective": "finish the audit",
+            "status": "active",
+            "updated_at": "<PINNED>"
+          },
+          "no_progress_count": 2,
+          "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-A\", \"satisfied\": false}",
+          "stand_down_reason": "no_progress_detected",
+          "turn": 3
+        }
+      ]
+    },
+    {
+      "description": "Evidence changes on every turn: the no-progress counter resets and the loop keeps continuing until the continuation cap.",
+      "name": "changing_evidence",
+      "steps": [
+        {
+          "continuation_count_after": 1,
+          "decision": "continue",
+          "evidence_signature": "sig-A",
+          "goal_after": {
+            "continuation_count": 1,
+            "created_at": "1970-01-01T00:00:00+00:00",
+            "last_evaluation": {
+              "blocker": "goal_not_met_yet",
+              "evaluated_at": "<PINNED>",
+              "evidence_summary": "e",
+              "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-A\", \"satisfied\": false}",
+              "reason": "turn 1 reworded reason",
+              "run_id": "run-1",
+              "satisfied": false
+            },
+            "max_continuations": 8,
+            "max_no_progress_continuations": 2,
+            "no_progress_count": 0,
+            "objective": "finish the audit",
+            "status": "active",
+            "updated_at": "<PINNED>"
+          },
+          "no_progress_count": 0,
+          "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-A\", \"satisfied\": false}",
+          "stand_down_reason": null,
+          "turn": 1
+        },
+        {
+          "continuation_count_after": 2,
+          "decision": "continue",
+          "evidence_signature": "sig-B",
+          "goal_after": {
+            "continuation_count": 2,
+            "created_at": "1970-01-01T00:00:00+00:00",
+            "last_evaluation": {
+              "blocker": "goal_not_met_yet",
+              "evaluated_at": "<PINNED>",
+              "evidence_summary": "e",
+              "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-B\", \"satisfied\": false}",
+              "reason": "turn 2 reworded reason",
+              "run_id": "run-2",
+              "satisfied": false
+            },
+            "max_continuations": 8,
+            "max_no_progress_continuations": 2,
+            "no_progress_count": 0,
+            "objective": "finish the audit",
+            "status": "active",
+            "updated_at": "<PINNED>"
+          },
+          "no_progress_count": 0,
+          "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-B\", \"satisfied\": false}",
+          "stand_down_reason": null,
+          "turn": 2
+        },
+        {
+          "continuation_count_after": 3,
+          "decision": "continue",
+          "evidence_signature": "sig-C",
+          "goal_after": {
+            "continuation_count": 3,
+            "created_at": "1970-01-01T00:00:00+00:00",
+            "last_evaluation": {
+              "blocker": "goal_not_met_yet",
+              "evaluated_at": "<PINNED>",
+              "evidence_summary": "e",
+              "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-C\", \"satisfied\": false}",
+              "reason": "turn 3 reworded reason",
+              "run_id": "run-3",
+              "satisfied": false
+            },
+            "max_continuations": 8,
+            "max_no_progress_continuations": 2,
+            "no_progress_count": 0,
+            "objective": "finish the audit",
+            "status": "active",
+            "updated_at": "<PINNED>"
+          },
+          "no_progress_count": 0,
+          "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-C\", \"satisfied\": false}",
+          "stand_down_reason": null,
+          "turn": 3
+        },
+        {
+          "continuation_count_after": 4,
+          "decision": "continue",
+          "evidence_signature": "sig-D",
+          "goal_after": {
+            "continuation_count": 4,
+            "created_at": "1970-01-01T00:00:00+00:00",
+            "last_evaluation": {
+              "blocker": "goal_not_met_yet",
+              "evaluated_at": "<PINNED>",
+              "evidence_summary": "e",
+              "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-D\", \"satisfied\": false}",
+              "reason": "turn 4 reworded reason",
+              "run_id": "run-4",
+              "satisfied": false
+            },
+            "max_continuations": 8,
+            "max_no_progress_continuations": 2,
+            "no_progress_count": 0,
+            "objective": "finish the audit",
+            "status": "active",
+            "updated_at": "<PINNED>"
+          },
+          "no_progress_count": 0,
+          "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-D\", \"satisfied\": false}",
+          "stand_down_reason": null,
+          "turn": 4
+        }
+      ]
+    },
+    {
+      "description": "One repeat, then new evidence: the counter goes 0 -> 1 -> 0.",
+      "name": "stall_then_recover",
+      "steps": [
+        {
+          "continuation_count_after": 1,
+          "decision": "continue",
+          "evidence_signature": "sig-A",
+          "goal_after": {
+            "continuation_count": 1,
+            "created_at": "1970-01-01T00:00:00+00:00",
+            "last_evaluation": {
+              "blocker": "goal_not_met_yet",
+              "evaluated_at": "<PINNED>",
+              "evidence_summary": "e",
+              "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-A\", \"satisfied\": false}",
+              "reason": "turn 1 reworded reason",
+              "run_id": "run-1",
+              "satisfied": false
+            },
+            "max_continuations": 8,
+            "max_no_progress_continuations": 2,
+            "no_progress_count": 0,
+            "objective": "finish the audit",
+            "status": "active",
+            "updated_at": "<PINNED>"
+          },
+          "no_progress_count": 0,
+          "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-A\", \"satisfied\": false}",
+          "stand_down_reason": null,
+          "turn": 1
+        },
+        {
+          "continuation_count_after": 2,
+          "decision": "continue",
+          "evidence_signature": "sig-A",
+          "goal_after": {
+            "continuation_count": 2,
+            "created_at": "1970-01-01T00:00:00+00:00",
+            "last_evaluation": {
+              "blocker": "goal_not_met_yet",
+              "evaluated_at": "<PINNED>",
+              "evidence_summary": "e",
+              "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-A\", \"satisfied\": false}",
+              "reason": "turn 2 reworded reason",
+              "run_id": "run-2",
+              "satisfied": false
+            },
+            "max_continuations": 8,
+            "max_no_progress_continuations": 2,
+            "no_progress_count": 1,
+            "objective": "finish the audit",
+            "status": "active",
+            "updated_at": "<PINNED>"
+          },
+          "no_progress_count": 1,
+          "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-A\", \"satisfied\": false}",
+          "stand_down_reason": null,
+          "turn": 2
+        },
+        {
+          "continuation_count_after": 3,
+          "decision": "continue",
+          "evidence_signature": "sig-B",
+          "goal_after": {
+            "continuation_count": 3,
+            "created_at": "1970-01-01T00:00:00+00:00",
+            "last_evaluation": {
+              "blocker": "goal_not_met_yet",
+              "evaluated_at": "<PINNED>",
+              "evidence_summary": "e",
+              "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-B\", \"satisfied\": false}",
+              "reason": "turn 3 reworded reason",
+              "run_id": "run-3",
+              "satisfied": false
+            },
+            "max_continuations": 8,
+            "max_no_progress_continuations": 2,
+            "no_progress_count": 0,
+            "objective": "finish the audit",
+            "status": "active",
+            "updated_at": "<PINNED>"
+          },
+          "no_progress_count": 0,
+          "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-B\", \"satisfied\": false}",
+          "stand_down_reason": null,
+          "turn": 3
+        },
+        {
+          "continuation_count_after": 4,
+          "decision": "continue",
+          "evidence_signature": "sig-B",
+          "goal_after": {
+            "continuation_count": 4,
+            "created_at": "1970-01-01T00:00:00+00:00",
+            "last_evaluation": {
+              "blocker": "goal_not_met_yet",
+              "evaluated_at": "<PINNED>",
+              "evidence_summary": "e",
+              "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-B\", \"satisfied\": false}",
+              "reason": "turn 4 reworded reason",
+              "run_id": "run-4",
+              "satisfied": false
+            },
+            "max_continuations": 8,
+            "max_no_progress_continuations": 2,
+            "no_progress_count": 1,
+            "objective": "finish the audit",
+            "status": "active",
+            "updated_at": "<PINNED>"
+          },
+          "no_progress_count": 1,
+          "progress_key": "{\"blocker\": \"goal_not_met_yet\", \"evidence_signature\": \"sig-B\", \"satisfied\": false}",
+          "stand_down_reason": null,
+          "turn": 4
+        }
+      ]
+    }
+  ]
+}

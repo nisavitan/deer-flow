@@ -1,0 +1,573 @@
+{
+  "_provenance": {
+    "commit": "0950924",
+    "extracted_by": "ports/claude-code/parity/baseline/extract_vectors.py",
+    "group": "G4",
+    "method": "executed the original engine functions/classes listed in source_symbols",
+    "note": "Terminal statuses come from deerflow.subagents.status_contract:SUBAGENT_STATUS_VALUES; 'in_progress' is deliberately non-terminal.",
+    "source_symbols": [
+      "deerflow.agents.thread_state:merge_delegations"
+    ]
+  },
+  "ledger_max_entries": 50,
+  "operations": [
+    {
+      "description": "None ledger + one entry.",
+      "existing": null,
+      "merged": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "name": "append_to_empty",
+      "new": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        }
+      ]
+    },
+    {
+      "description": "Append preserves first-seen order.",
+      "existing": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "merged": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        },
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d2",
+          "id": "d2",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "name": "append_two",
+      "new": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d2",
+          "id": "d2",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        }
+      ]
+    },
+    {
+      "description": "Falsy new update preserves the existing ledger.",
+      "existing": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "status": "completed",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "merged": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "status": "completed",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "name": "empty_new_preserves_existing",
+      "new": []
+    },
+    {
+      "description": "None update preserves the existing ledger.",
+      "existing": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "status": "completed",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "merged": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "status": "completed",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "name": "none_new_preserves_existing",
+      "new": null
+    },
+    {
+      "description": "Same id: latest wins, position preserved.",
+      "existing": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "merged": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "result_brief": "done",
+          "result_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "completed",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "name": "same_id_update_advances_status",
+      "new": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "result_brief": "done",
+          "result_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "completed",
+          "subagent_type": "general-purpose"
+        }
+      ]
+    },
+    {
+      "description": "completed -> in_progress is rejected; the terminal entry survives untouched.",
+      "existing": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "result_brief": "done",
+          "status": "completed",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "merged": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "result_brief": "done",
+          "status": "completed",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "name": "terminal_never_downgraded",
+      "new": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        }
+      ]
+    },
+    {
+      "description": "Terminal -> terminal is a normal update (both statuses are in TERMINAL_STATUSES).",
+      "existing": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "status": "failed",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "merged": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "result_brief": "recovered",
+          "status": "completed",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "name": "terminal_to_terminal_allowed",
+      "new": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "result_brief": "recovered",
+          "status": "completed",
+          "subagent_type": "general-purpose"
+        }
+      ]
+    },
+    {
+      "description": "An update inherits the first-seen created_at and the previously tagged run_id.",
+      "existing": [
+        {
+          "created_at": "2020-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "run_id": "run-A",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "merged": [
+        {
+          "created_at": "2020-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "run_id": "run-A",
+          "status": "completed",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "name": "created_at_and_run_id_preserved_on_update",
+      "new": [
+        {
+          "created_at": "2099-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "status": "completed",
+          "subagent_type": "general-purpose"
+        }
+      ]
+    },
+    {
+      "description": "Additive stop_reason rides on the terminal entry.",
+      "existing": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "merged": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "result_brief": "partial",
+          "status": "completed",
+          "stop_reason": "loop_capped",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "name": "stop_reason_captured",
+      "new": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task d1",
+          "id": "d1",
+          "result_brief": "partial",
+          "status": "completed",
+          "stop_reason": "loop_capped",
+          "subagent_type": "general-purpose"
+        }
+      ]
+    },
+    {
+      "description": "50 existing + 5 new -> capped to the most recent 50 entries (oldest 5 evicted).",
+      "existing_ids": [
+        "d000",
+        "d001",
+        "d002",
+        "d003",
+        "d004",
+        "d005",
+        "d006",
+        "d007",
+        "d008",
+        "d009",
+        "d010",
+        "d011",
+        "d012",
+        "d013",
+        "d014",
+        "d015",
+        "d016",
+        "d017",
+        "d018",
+        "d019",
+        "d020",
+        "d021",
+        "d022",
+        "d023",
+        "d024",
+        "d025",
+        "d026",
+        "d027",
+        "d028",
+        "d029",
+        "d030",
+        "d031",
+        "d032",
+        "d033",
+        "d034",
+        "d035",
+        "d036",
+        "d037",
+        "d038",
+        "d039",
+        "d040",
+        "d041",
+        "d042",
+        "d043",
+        "d044",
+        "d045",
+        "d046",
+        "d047",
+        "d048",
+        "d049"
+      ],
+      "merged_ids": [
+        "d005",
+        "d006",
+        "d007",
+        "d008",
+        "d009",
+        "d010",
+        "d011",
+        "d012",
+        "d013",
+        "d014",
+        "d015",
+        "d016",
+        "d017",
+        "d018",
+        "d019",
+        "d020",
+        "d021",
+        "d022",
+        "d023",
+        "d024",
+        "d025",
+        "d026",
+        "d027",
+        "d028",
+        "d029",
+        "d030",
+        "d031",
+        "d032",
+        "d033",
+        "d034",
+        "d035",
+        "d036",
+        "d037",
+        "d038",
+        "d039",
+        "d040",
+        "d041",
+        "d042",
+        "d043",
+        "d044",
+        "d045",
+        "d046",
+        "d047",
+        "d048",
+        "d049",
+        "n000",
+        "n001",
+        "n002",
+        "n003",
+        "n004"
+      ],
+      "merged_length": 50,
+      "name": "cap_eviction_50",
+      "new_ids": [
+        "n000",
+        "n001",
+        "n002",
+        "n003",
+        "n004"
+      ]
+    }
+  ],
+  "sequence": [
+    {
+      "ledger": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task s1",
+          "id": "s1",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        },
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task s2",
+          "id": "s2",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "step": "dispatch_two",
+      "update": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task s1",
+          "id": "s1",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        },
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task s2",
+          "id": "s2",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        }
+      ]
+    },
+    {
+      "ledger": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task s1",
+          "id": "s1",
+          "result_brief": "alpha",
+          "result_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "status": "completed",
+          "subagent_type": "general-purpose"
+        },
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task s2",
+          "id": "s2",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "step": "s1_completes",
+      "update": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task s1",
+          "id": "s1",
+          "result_brief": "alpha",
+          "result_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "status": "completed",
+          "subagent_type": "general-purpose"
+        }
+      ]
+    },
+    {
+      "ledger": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task s1",
+          "id": "s1",
+          "result_brief": "alpha",
+          "result_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "status": "completed",
+          "subagent_type": "general-purpose"
+        },
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task s2",
+          "id": "s2",
+          "status": "failed",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "step": "s2_fails",
+      "update": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task s2",
+          "id": "s2",
+          "status": "failed",
+          "subagent_type": "general-purpose"
+        }
+      ]
+    },
+    {
+      "ledger": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task s1",
+          "id": "s1",
+          "result_brief": "alpha",
+          "result_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "status": "completed",
+          "subagent_type": "general-purpose"
+        },
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task s2",
+          "id": "s2",
+          "status": "failed",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "step": "stale_s1_running_rejected",
+      "update": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task s1",
+          "id": "s1",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        }
+      ]
+    },
+    {
+      "ledger": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task s1",
+          "id": "s1",
+          "result_brief": "alpha",
+          "result_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "status": "completed",
+          "subagent_type": "general-purpose"
+        },
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task s2",
+          "id": "s2",
+          "status": "failed",
+          "subagent_type": "general-purpose"
+        },
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task s3",
+          "id": "s3",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        }
+      ],
+      "step": "dispatch_third",
+      "update": [
+        {
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "description": "task s3",
+          "id": "s3",
+          "status": "in_progress",
+          "subagent_type": "general-purpose"
+        }
+      ]
+    }
+  ]
+}

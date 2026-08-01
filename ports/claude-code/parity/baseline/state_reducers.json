@@ -1,0 +1,415 @@
+{
+  "_provenance": {
+    "commit": "0950924",
+    "extracted_by": "ports/claude-code/parity/baseline/extract_vectors.py",
+    "group": "G7",
+    "method": "executed the original engine functions/classes listed in source_symbols",
+    "note": "Goal payloads use build_goal_state with a pinned timestamp; updated_at is replaced with '<PINNED>'.",
+    "source_symbols": [
+      "deerflow.agents.thread_state:merge_skill_context",
+      "deerflow.agents.thread_state:merge_goal",
+      "deerflow.agents.thread_state:merge_promoted",
+      "deerflow.agents.thread_state:merge_artifacts"
+    ]
+  },
+  "merge_artifacts": [
+    {
+      "description": "None existing.",
+      "existing": null,
+      "merged": [
+        "/mnt/user-data/outputs/a.md"
+      ],
+      "name": "append_from_none",
+      "new": [
+        "/mnt/user-data/outputs/a.md"
+      ]
+    },
+    {
+      "description": "Duplicates collapse, first-seen order is preserved.",
+      "existing": [
+        "/mnt/user-data/outputs/a.md",
+        "/mnt/user-data/outputs/b.md"
+      ],
+      "merged": [
+        "/mnt/user-data/outputs/a.md",
+        "/mnt/user-data/outputs/b.md",
+        "/mnt/user-data/outputs/c.md"
+      ],
+      "name": "dedup_preserves_order",
+      "new": [
+        "/mnt/user-data/outputs/b.md",
+        "/mnt/user-data/outputs/c.md"
+      ]
+    },
+    {
+      "description": "None update preserves existing artifacts.",
+      "existing": [
+        "/mnt/user-data/outputs/a.md"
+      ],
+      "merged": [
+        "/mnt/user-data/outputs/a.md"
+      ],
+      "name": "none_new_preserves",
+      "new": null
+    },
+    {
+      "description": "An empty update is a no-op merge.",
+      "existing": [
+        "/mnt/user-data/outputs/a.md"
+      ],
+      "merged": [
+        "/mnt/user-data/outputs/a.md"
+      ],
+      "name": "empty_new_returns_existing",
+      "new": []
+    }
+  ],
+  "merge_goal": [
+    {
+      "description": "A node that does not touch the goal channel preserves it.",
+      "existing": {
+        "continuation_count": 0,
+        "created_at": "1970-01-01T00:00:00+00:00",
+        "max_continuations": 8,
+        "max_no_progress_continuations": 2,
+        "no_progress_count": 0,
+        "objective": "ship the port",
+        "status": "active",
+        "updated_at": "<PINNED>"
+      },
+      "merged": {
+        "continuation_count": 0,
+        "created_at": "1970-01-01T00:00:00+00:00",
+        "max_continuations": 8,
+        "max_no_progress_continuations": 2,
+        "no_progress_count": 0,
+        "objective": "ship the port",
+        "status": "active",
+        "updated_at": "<PINNED>"
+      },
+      "name": "none_update_preserves_active_goal",
+      "new": null
+    },
+    {
+      "description": "The goal writer replaces the active goal.",
+      "existing": {
+        "continuation_count": 0,
+        "created_at": "1970-01-01T00:00:00+00:00",
+        "max_continuations": 8,
+        "max_no_progress_continuations": 2,
+        "no_progress_count": 0,
+        "objective": "ship the port",
+        "status": "active",
+        "updated_at": "<PINNED>"
+      },
+      "merged": {
+        "continuation_count": 0,
+        "created_at": "1970-01-01T00:00:00+00:00",
+        "max_continuations": 8,
+        "max_no_progress_continuations": 2,
+        "no_progress_count": 0,
+        "objective": "ship the port v2",
+        "status": "active",
+        "updated_at": "<PINNED>"
+      },
+      "name": "explicit_replacement_wins",
+      "new": {
+        "continuation_count": 0,
+        "created_at": "1970-01-01T00:00:00+00:00",
+        "max_continuations": 8,
+        "max_no_progress_continuations": 2,
+        "no_progress_count": 0,
+        "objective": "ship the port v2",
+        "status": "active",
+        "updated_at": "<PINNED>"
+      }
+    },
+    {
+      "description": "First write installs the goal.",
+      "existing": null,
+      "merged": {
+        "continuation_count": 0,
+        "created_at": "1970-01-01T00:00:00+00:00",
+        "max_continuations": 8,
+        "max_no_progress_continuations": 2,
+        "no_progress_count": 0,
+        "objective": "ship the port",
+        "status": "active",
+        "updated_at": "<PINNED>"
+      },
+      "name": "set_from_empty",
+      "new": {
+        "continuation_count": 0,
+        "created_at": "1970-01-01T00:00:00+00:00",
+        "max_continuations": 8,
+        "max_no_progress_continuations": 2,
+        "no_progress_count": 0,
+        "objective": "ship the port",
+        "status": "active",
+        "updated_at": "<PINNED>"
+      }
+    }
+  ],
+  "merge_promoted": [
+    {
+      "description": "First write dedupes names, preserving order.",
+      "existing": null,
+      "merged": {
+        "catalog_hash": "h1",
+        "names": [
+          "a",
+          "b"
+        ]
+      },
+      "name": "first_write",
+      "new": {
+        "catalog_hash": "h1",
+        "names": [
+          "a",
+          "b",
+          "a"
+        ]
+      }
+    },
+    {
+      "description": "Same catalog hash: union, dedupe, preserve order.",
+      "existing": {
+        "catalog_hash": "h1",
+        "names": [
+          "a",
+          "b"
+        ]
+      },
+      "merged": {
+        "catalog_hash": "h1",
+        "names": [
+          "a",
+          "b",
+          "c"
+        ]
+      },
+      "name": "same_hash_unions",
+      "new": {
+        "catalog_hash": "h1",
+        "names": [
+          "b",
+          "c"
+        ]
+      }
+    },
+    {
+      "description": "Catalog drift wholesale-replaces so a stale bare name cannot expose a different tool.",
+      "existing": {
+        "catalog_hash": "h1",
+        "names": [
+          "a",
+          "b"
+        ]
+      },
+      "merged": {
+        "catalog_hash": "h2",
+        "names": [
+          "c"
+        ]
+      },
+      "name": "hash_change_replaces",
+      "new": {
+        "catalog_hash": "h2",
+        "names": [
+          "c"
+        ]
+      }
+    },
+    {
+      "description": "None update preserves existing promotions.",
+      "existing": {
+        "catalog_hash": "h1",
+        "names": [
+          "a"
+        ]
+      },
+      "merged": {
+        "catalog_hash": "h1",
+        "names": [
+          "a"
+        ]
+      },
+      "name": "none_update_preserves",
+      "new": null
+    },
+    {
+      "description": "Falsy update preserves existing promotions.",
+      "existing": {
+        "catalog_hash": "h1",
+        "names": [
+          "a"
+        ]
+      },
+      "merged": {
+        "catalog_hash": "h1",
+        "names": [
+          "a"
+        ]
+      },
+      "name": "empty_update_preserves",
+      "new": {}
+    }
+  ],
+  "merge_skill_context": [
+    {
+      "description": "None existing + one entry.",
+      "existing": null,
+      "merged": [
+        {
+          "description": "d",
+          "loaded_at": 0,
+          "name": "a",
+          "path": "/mnt/skills/public/a/SKILL.md"
+        }
+      ],
+      "name": "append_to_none",
+      "new": [
+        {
+          "description": "d",
+          "loaded_at": 0,
+          "name": "a",
+          "path": "/mnt/skills/public/a/SKILL.md"
+        }
+      ]
+    },
+    {
+      "description": "Re-reading a path replaces the entry and moves it to the most-recent slot.",
+      "existing": [
+        {
+          "description": "d",
+          "loaded_at": 1,
+          "name": "a",
+          "path": "/mnt/skills/public/a/SKILL.md"
+        },
+        {
+          "description": "d",
+          "loaded_at": 2,
+          "name": "b",
+          "path": "/mnt/skills/public/b/SKILL.md"
+        }
+      ],
+      "merged": [
+        {
+          "description": "d",
+          "loaded_at": 2,
+          "name": "b",
+          "path": "/mnt/skills/public/b/SKILL.md"
+        },
+        {
+          "description": "updated",
+          "loaded_at": 3,
+          "name": "a",
+          "path": "/mnt/skills/public/a/SKILL.md"
+        }
+      ],
+      "name": "dedup_by_path_refreshes_recency",
+      "new": [
+        {
+          "description": "updated",
+          "loaded_at": 3,
+          "name": "a",
+          "path": "/mnt/skills/public/a/SKILL.md"
+        }
+      ]
+    },
+    {
+      "description": "A None update still normalizes legacy entries (drops the verbatim body, collapses whitespace).",
+      "existing": [
+        {
+          "body": "LEGACY BODY",
+          "description": "  spaced   out  ",
+          "loaded_at": 4,
+          "name": "a",
+          "path": "/mnt/skills/public/a/SKILL.md"
+        }
+      ],
+      "merged": [
+        {
+          "description": "spaced out",
+          "loaded_at": 4,
+          "name": "a",
+          "path": "/mnt/skills/public/a/SKILL.md"
+        }
+      ],
+      "name": "none_new_normalizes_existing",
+      "new": null
+    },
+    {
+      "description": "Unknown keys are dropped; a non-int loaded_at becomes 0.",
+      "existing": null,
+      "merged": [
+        {
+          "description": "d",
+          "loaded_at": 0,
+          "name": "a",
+          "path": "/mnt/skills/public/a/SKILL.md"
+        }
+      ],
+      "name": "legacy_keys_dropped",
+      "new": [
+        {
+          "content": "LEGACY",
+          "description": "d",
+          "loaded_at": "not-an-int",
+          "name": "a",
+          "path": "/mnt/skills/public/a/SKILL.md"
+        }
+      ]
+    },
+    {
+      "description": "Descriptions are whitespace-collapsed and truncated to 500 chars.",
+      "existing": null,
+      "merged": [
+        {
+          "description": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "loaded_at": 0,
+          "name": "a",
+          "path": "/mnt/skills/public/a/SKILL.md"
+        }
+      ],
+      "name": "description_truncated_to_500",
+      "new": [
+        {
+          "description": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "loaded_at": 0,
+          "name": "a",
+          "path": "/mnt/skills/public/a/SKILL.md"
+        }
+      ]
+    },
+    {
+      "description": "6 existing + 4 new = 10 -> capped to the 8 most recently read entries.",
+      "existing_paths": [
+        "/mnt/skills/public/s0/SKILL.md",
+        "/mnt/skills/public/s1/SKILL.md",
+        "/mnt/skills/public/s2/SKILL.md",
+        "/mnt/skills/public/s3/SKILL.md",
+        "/mnt/skills/public/s4/SKILL.md",
+        "/mnt/skills/public/s5/SKILL.md"
+      ],
+      "merged_length": 8,
+      "merged_paths": [
+        "/mnt/skills/public/s2/SKILL.md",
+        "/mnt/skills/public/s3/SKILL.md",
+        "/mnt/skills/public/s4/SKILL.md",
+        "/mnt/skills/public/s5/SKILL.md",
+        "/mnt/skills/public/n0/SKILL.md",
+        "/mnt/skills/public/n1/SKILL.md",
+        "/mnt/skills/public/n2/SKILL.md",
+        "/mnt/skills/public/n3/SKILL.md"
+      ],
+      "name": "cap_8_keeps_most_recent",
+      "new_paths": [
+        "/mnt/skills/public/n0/SKILL.md",
+        "/mnt/skills/public/n1/SKILL.md",
+        "/mnt/skills/public/n2/SKILL.md",
+        "/mnt/skills/public/n3/SKILL.md"
+      ]
+    }
+  ]
+}

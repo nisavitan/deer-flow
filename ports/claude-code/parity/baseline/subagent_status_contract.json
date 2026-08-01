@@ -1,0 +1,834 @@
+{
+  "_provenance": {
+    "commit": "0950924",
+    "extracted_by": "ports/claude-code/parity/baseline/extract_vectors.py",
+    "group": "G4",
+    "method": "executed the original engine functions/classes listed in source_symbols",
+    "note": "contract_json is a verbatim parse of the repo contract file; the format table is the real formatter's output for every status x stop_reason combination.",
+    "source_symbols": [
+      "contracts/subagent_status_contract.json",
+      "deerflow.subagents.status_contract:format_subagent_result_message",
+      "deerflow.subagents.status_contract:make_subagent_additional_kwargs"
+    ]
+  },
+  "contract_json": {
+    "description": "Cross-language contract fixture for the structured subagent status field. Task result text is display content only and is not part of this wire contract. The optional subagent_stop_reason field (v2, #3875 Phase 2) carries why a guardrail cap ended a run early; it is ignored by older consumers that only read subagent_status.",
+    "valid_status_values": [
+      "completed",
+      "failed",
+      "cancelled",
+      "timed_out",
+      "polling_timed_out"
+    ],
+    "valid_stop_reason_values": [
+      "token_capped",
+      "turn_capped",
+      "loop_capped"
+    ],
+    "version": 2
+  },
+  "contract_source_path": "contracts/subagent_status_contract.json",
+  "result_message_formats": [
+    {
+      "additional_kwargs": {
+        "subagent_result_brief": "FINDINGS: three defects.",
+        "subagent_result_sha256": "5738a3b16d714f3f6e89e7929d26cad3b7bfc97a90658e07a8fde78611a33b86",
+        "subagent_status": "completed"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": null,
+      "model_visible_content": "Task Succeeded. Result: FINDINGS: three defects.",
+      "result": "FINDINGS: three defects.",
+      "status": "completed",
+      "stop_reason": null
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "completed"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": null,
+      "model_visible_content": "Task Succeeded. Result: ",
+      "result": null,
+      "status": "completed",
+      "stop_reason": null
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "completed"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": null,
+      "model_visible_content": "Task Succeeded. Result: ",
+      "result": null,
+      "status": "completed",
+      "stop_reason": null
+    },
+    {
+      "additional_kwargs": {
+        "subagent_result_brief": "FINDINGS: three defects.",
+        "subagent_result_sha256": "5738a3b16d714f3f6e89e7929d26cad3b7bfc97a90658e07a8fde78611a33b86",
+        "subagent_status": "completed",
+        "subagent_stop_reason": "token_capped"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": null,
+      "model_visible_content": "Task Succeeded (capped: token budget). Result: FINDINGS: three defects.",
+      "result": "FINDINGS: three defects.",
+      "status": "completed",
+      "stop_reason": "token_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "completed",
+        "subagent_stop_reason": "token_capped"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": null,
+      "model_visible_content": "Task Succeeded (capped: token budget). Result: ",
+      "result": null,
+      "status": "completed",
+      "stop_reason": "token_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "completed",
+        "subagent_stop_reason": "token_capped"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": null,
+      "model_visible_content": "Task Succeeded (capped: token budget). Result: ",
+      "result": null,
+      "status": "completed",
+      "stop_reason": "token_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_result_brief": "FINDINGS: three defects.",
+        "subagent_result_sha256": "5738a3b16d714f3f6e89e7929d26cad3b7bfc97a90658e07a8fde78611a33b86",
+        "subagent_status": "completed",
+        "subagent_stop_reason": "turn_capped"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": null,
+      "model_visible_content": "Task Succeeded (capped: turn budget). Result: FINDINGS: three defects.",
+      "result": "FINDINGS: three defects.",
+      "status": "completed",
+      "stop_reason": "turn_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "completed",
+        "subagent_stop_reason": "turn_capped"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": null,
+      "model_visible_content": "Task Succeeded (capped: turn budget). Result: ",
+      "result": null,
+      "status": "completed",
+      "stop_reason": "turn_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "completed",
+        "subagent_stop_reason": "turn_capped"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": null,
+      "model_visible_content": "Task Succeeded (capped: turn budget). Result: ",
+      "result": null,
+      "status": "completed",
+      "stop_reason": "turn_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_result_brief": "FINDINGS: three defects.",
+        "subagent_result_sha256": "5738a3b16d714f3f6e89e7929d26cad3b7bfc97a90658e07a8fde78611a33b86",
+        "subagent_status": "completed",
+        "subagent_stop_reason": "loop_capped"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": null,
+      "model_visible_content": "Task Succeeded (capped: repeated tool-call loop). Result: FINDINGS: three defects.",
+      "result": "FINDINGS: three defects.",
+      "status": "completed",
+      "stop_reason": "loop_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "completed",
+        "subagent_stop_reason": "loop_capped"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": null,
+      "model_visible_content": "Task Succeeded (capped: repeated tool-call loop). Result: ",
+      "result": null,
+      "status": "completed",
+      "stop_reason": "loop_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "completed",
+        "subagent_stop_reason": "loop_capped"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": null,
+      "model_visible_content": "Task Succeeded (capped: repeated tool-call loop). Result: ",
+      "result": null,
+      "status": "completed",
+      "stop_reason": "loop_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "failed"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": "Task failed.",
+      "model_visible_content": "Task failed.",
+      "result": "FINDINGS: three defects.",
+      "status": "failed",
+      "stop_reason": null
+    },
+    {
+      "additional_kwargs": {
+        "subagent_error": "boom: the tool exploded",
+        "subagent_status": "failed"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": "boom: the tool exploded",
+      "model_visible_content": "Task failed. Error: boom: the tool exploded",
+      "result": null,
+      "status": "failed",
+      "stop_reason": null
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "failed"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": "Task failed.",
+      "model_visible_content": "Task failed.",
+      "result": null,
+      "status": "failed",
+      "stop_reason": null
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "failed",
+        "subagent_stop_reason": "token_capped"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": "Task failed.",
+      "model_visible_content": "Task failed (capped: token budget).",
+      "result": "FINDINGS: three defects.",
+      "status": "failed",
+      "stop_reason": "token_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_error": "boom: the tool exploded",
+        "subagent_status": "failed",
+        "subagent_stop_reason": "token_capped"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": "boom: the tool exploded",
+      "model_visible_content": "Task failed (capped: token budget). Error: boom: the tool exploded",
+      "result": null,
+      "status": "failed",
+      "stop_reason": "token_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "failed",
+        "subagent_stop_reason": "token_capped"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": "Task failed.",
+      "model_visible_content": "Task failed (capped: token budget).",
+      "result": null,
+      "status": "failed",
+      "stop_reason": "token_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "failed",
+        "subagent_stop_reason": "turn_capped"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": "Task failed.",
+      "model_visible_content": "Task failed (capped: turn budget).",
+      "result": "FINDINGS: three defects.",
+      "status": "failed",
+      "stop_reason": "turn_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_error": "boom: the tool exploded",
+        "subagent_status": "failed",
+        "subagent_stop_reason": "turn_capped"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": "boom: the tool exploded",
+      "model_visible_content": "Task failed (capped: turn budget). Error: boom: the tool exploded",
+      "result": null,
+      "status": "failed",
+      "stop_reason": "turn_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "failed",
+        "subagent_stop_reason": "turn_capped"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": "Task failed.",
+      "model_visible_content": "Task failed (capped: turn budget).",
+      "result": null,
+      "status": "failed",
+      "stop_reason": "turn_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "failed",
+        "subagent_stop_reason": "loop_capped"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": "Task failed.",
+      "model_visible_content": "Task failed (capped: repeated tool-call loop).",
+      "result": "FINDINGS: three defects.",
+      "status": "failed",
+      "stop_reason": "loop_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_error": "boom: the tool exploded",
+        "subagent_status": "failed",
+        "subagent_stop_reason": "loop_capped"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": "boom: the tool exploded",
+      "model_visible_content": "Task failed (capped: repeated tool-call loop). Error: boom: the tool exploded",
+      "result": null,
+      "status": "failed",
+      "stop_reason": "loop_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "failed",
+        "subagent_stop_reason": "loop_capped"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": "Task failed.",
+      "model_visible_content": "Task failed (capped: repeated tool-call loop).",
+      "result": null,
+      "status": "failed",
+      "stop_reason": "loop_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "cancelled"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": "Task cancelled by user.",
+      "model_visible_content": "Task cancelled by user.",
+      "result": "FINDINGS: three defects.",
+      "status": "cancelled",
+      "stop_reason": null
+    },
+    {
+      "additional_kwargs": {
+        "subagent_error": "boom: the tool exploded",
+        "subagent_status": "cancelled"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": "boom: the tool exploded",
+      "model_visible_content": "Task cancelled by user. Error: boom: the tool exploded",
+      "result": null,
+      "status": "cancelled",
+      "stop_reason": null
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "cancelled"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": "Task cancelled by user.",
+      "model_visible_content": "Task cancelled by user.",
+      "result": null,
+      "status": "cancelled",
+      "stop_reason": null
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "cancelled",
+        "subagent_stop_reason": "token_capped"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": "Task cancelled by user.",
+      "model_visible_content": "Task cancelled by user.",
+      "result": "FINDINGS: three defects.",
+      "status": "cancelled",
+      "stop_reason": "token_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_error": "boom: the tool exploded",
+        "subagent_status": "cancelled",
+        "subagent_stop_reason": "token_capped"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": "boom: the tool exploded",
+      "model_visible_content": "Task cancelled by user. Error: boom: the tool exploded",
+      "result": null,
+      "status": "cancelled",
+      "stop_reason": "token_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "cancelled",
+        "subagent_stop_reason": "token_capped"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": "Task cancelled by user.",
+      "model_visible_content": "Task cancelled by user.",
+      "result": null,
+      "status": "cancelled",
+      "stop_reason": "token_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "cancelled",
+        "subagent_stop_reason": "turn_capped"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": "Task cancelled by user.",
+      "model_visible_content": "Task cancelled by user.",
+      "result": "FINDINGS: three defects.",
+      "status": "cancelled",
+      "stop_reason": "turn_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_error": "boom: the tool exploded",
+        "subagent_status": "cancelled",
+        "subagent_stop_reason": "turn_capped"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": "boom: the tool exploded",
+      "model_visible_content": "Task cancelled by user. Error: boom: the tool exploded",
+      "result": null,
+      "status": "cancelled",
+      "stop_reason": "turn_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "cancelled",
+        "subagent_stop_reason": "turn_capped"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": "Task cancelled by user.",
+      "model_visible_content": "Task cancelled by user.",
+      "result": null,
+      "status": "cancelled",
+      "stop_reason": "turn_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "cancelled",
+        "subagent_stop_reason": "loop_capped"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": "Task cancelled by user.",
+      "model_visible_content": "Task cancelled by user.",
+      "result": "FINDINGS: three defects.",
+      "status": "cancelled",
+      "stop_reason": "loop_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_error": "boom: the tool exploded",
+        "subagent_status": "cancelled",
+        "subagent_stop_reason": "loop_capped"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": "boom: the tool exploded",
+      "model_visible_content": "Task cancelled by user. Error: boom: the tool exploded",
+      "result": null,
+      "status": "cancelled",
+      "stop_reason": "loop_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "cancelled",
+        "subagent_stop_reason": "loop_capped"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": "Task cancelled by user.",
+      "model_visible_content": "Task cancelled by user.",
+      "result": null,
+      "status": "cancelled",
+      "stop_reason": "loop_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "timed_out"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": "Task timed out.",
+      "model_visible_content": "Task timed out.",
+      "result": "FINDINGS: three defects.",
+      "status": "timed_out",
+      "stop_reason": null
+    },
+    {
+      "additional_kwargs": {
+        "subagent_error": "boom: the tool exploded",
+        "subagent_status": "timed_out"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": "boom: the tool exploded",
+      "model_visible_content": "Task timed out. Error: boom: the tool exploded",
+      "result": null,
+      "status": "timed_out",
+      "stop_reason": null
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "timed_out"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": "Task timed out.",
+      "model_visible_content": "Task timed out.",
+      "result": null,
+      "status": "timed_out",
+      "stop_reason": null
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "timed_out",
+        "subagent_stop_reason": "token_capped"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": "Task timed out.",
+      "model_visible_content": "Task timed out.",
+      "result": "FINDINGS: three defects.",
+      "status": "timed_out",
+      "stop_reason": "token_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_error": "boom: the tool exploded",
+        "subagent_status": "timed_out",
+        "subagent_stop_reason": "token_capped"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": "boom: the tool exploded",
+      "model_visible_content": "Task timed out. Error: boom: the tool exploded",
+      "result": null,
+      "status": "timed_out",
+      "stop_reason": "token_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "timed_out",
+        "subagent_stop_reason": "token_capped"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": "Task timed out.",
+      "model_visible_content": "Task timed out.",
+      "result": null,
+      "status": "timed_out",
+      "stop_reason": "token_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "timed_out",
+        "subagent_stop_reason": "turn_capped"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": "Task timed out.",
+      "model_visible_content": "Task timed out.",
+      "result": "FINDINGS: three defects.",
+      "status": "timed_out",
+      "stop_reason": "turn_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_error": "boom: the tool exploded",
+        "subagent_status": "timed_out",
+        "subagent_stop_reason": "turn_capped"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": "boom: the tool exploded",
+      "model_visible_content": "Task timed out. Error: boom: the tool exploded",
+      "result": null,
+      "status": "timed_out",
+      "stop_reason": "turn_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "timed_out",
+        "subagent_stop_reason": "turn_capped"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": "Task timed out.",
+      "model_visible_content": "Task timed out.",
+      "result": null,
+      "status": "timed_out",
+      "stop_reason": "turn_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "timed_out",
+        "subagent_stop_reason": "loop_capped"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": "Task timed out.",
+      "model_visible_content": "Task timed out.",
+      "result": "FINDINGS: three defects.",
+      "status": "timed_out",
+      "stop_reason": "loop_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_error": "boom: the tool exploded",
+        "subagent_status": "timed_out",
+        "subagent_stop_reason": "loop_capped"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": "boom: the tool exploded",
+      "model_visible_content": "Task timed out. Error: boom: the tool exploded",
+      "result": null,
+      "status": "timed_out",
+      "stop_reason": "loop_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "timed_out",
+        "subagent_stop_reason": "loop_capped"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": "Task timed out.",
+      "model_visible_content": "Task timed out.",
+      "result": null,
+      "status": "timed_out",
+      "stop_reason": "loop_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "polling_timed_out"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": "Task polling timed out.",
+      "model_visible_content": "Task polling timed out.",
+      "result": "FINDINGS: three defects.",
+      "status": "polling_timed_out",
+      "stop_reason": null
+    },
+    {
+      "additional_kwargs": {
+        "subagent_error": "boom: the tool exploded",
+        "subagent_status": "polling_timed_out"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": "boom: the tool exploded",
+      "model_visible_content": "boom: the tool exploded",
+      "result": null,
+      "status": "polling_timed_out",
+      "stop_reason": null
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "polling_timed_out"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": "Task polling timed out.",
+      "model_visible_content": "Task polling timed out.",
+      "result": null,
+      "status": "polling_timed_out",
+      "stop_reason": null
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "polling_timed_out",
+        "subagent_stop_reason": "token_capped"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": "Task polling timed out.",
+      "model_visible_content": "Task polling timed out.",
+      "result": "FINDINGS: three defects.",
+      "status": "polling_timed_out",
+      "stop_reason": "token_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_error": "boom: the tool exploded",
+        "subagent_status": "polling_timed_out",
+        "subagent_stop_reason": "token_capped"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": "boom: the tool exploded",
+      "model_visible_content": "boom: the tool exploded",
+      "result": null,
+      "status": "polling_timed_out",
+      "stop_reason": "token_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "polling_timed_out",
+        "subagent_stop_reason": "token_capped"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": "Task polling timed out.",
+      "model_visible_content": "Task polling timed out.",
+      "result": null,
+      "status": "polling_timed_out",
+      "stop_reason": "token_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "polling_timed_out",
+        "subagent_stop_reason": "turn_capped"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": "Task polling timed out.",
+      "model_visible_content": "Task polling timed out.",
+      "result": "FINDINGS: three defects.",
+      "status": "polling_timed_out",
+      "stop_reason": "turn_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_error": "boom: the tool exploded",
+        "subagent_status": "polling_timed_out",
+        "subagent_stop_reason": "turn_capped"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": "boom: the tool exploded",
+      "model_visible_content": "boom: the tool exploded",
+      "result": null,
+      "status": "polling_timed_out",
+      "stop_reason": "turn_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "polling_timed_out",
+        "subagent_stop_reason": "turn_capped"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": "Task polling timed out.",
+      "model_visible_content": "Task polling timed out.",
+      "result": null,
+      "status": "polling_timed_out",
+      "stop_reason": "turn_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "polling_timed_out",
+        "subagent_stop_reason": "loop_capped"
+      },
+      "error": null,
+      "input_shape": "with_result_no_error",
+      "metadata_error": "Task polling timed out.",
+      "model_visible_content": "Task polling timed out.",
+      "result": "FINDINGS: three defects.",
+      "status": "polling_timed_out",
+      "stop_reason": "loop_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_error": "boom: the tool exploded",
+        "subagent_status": "polling_timed_out",
+        "subagent_stop_reason": "loop_capped"
+      },
+      "error": "boom: the tool exploded",
+      "input_shape": "with_error_no_result",
+      "metadata_error": "boom: the tool exploded",
+      "model_visible_content": "boom: the tool exploded",
+      "result": null,
+      "status": "polling_timed_out",
+      "stop_reason": "loop_capped"
+    },
+    {
+      "additional_kwargs": {
+        "subagent_status": "polling_timed_out",
+        "subagent_stop_reason": "loop_capped"
+      },
+      "error": null,
+      "input_shape": "empty",
+      "metadata_error": "Task polling timed out.",
+      "model_visible_content": "Task polling timed out.",
+      "result": null,
+      "status": "polling_timed_out",
+      "stop_reason": "loop_capped"
+    }
+  ],
+  "status_values": [
+    "completed",
+    "failed",
+    "cancelled",
+    "timed_out",
+    "polling_timed_out"
+  ],
+  "stop_reason_values": [
+    "token_capped",
+    "turn_capped",
+    "loop_capped"
+  ]
+}

@@ -1,0 +1,15 @@
+# Anchor test run — original DeerFlow engine (parity BASELINE)
+# cwd: backend/
+# command:
+#   PYTHONPATH=. uv run pytest tests/test_loop_detection_middleware.py tests/test_tool_error_handling_middleware.py tests/test_dangling_tool_call_middleware.py tests/test_clarification_middleware.py tests/test_lead_agent_prompt.py tests/test_subagent_executor.py tests/test_summarization_middleware.py tests/test_subagent_limit_middleware.py tests/test_tool_progress_middleware.py tests/test_thread_state_reducers.py tests/test_goal_runtime.py tests/test_subagent_status_contract.py -q
+# ---8<--- raw output below ---8<---
+........................................................................ [ 13%]
+........................................................................ [ 27%]
+........................................................................ [ 40%]
+........................................................................ [ 54%]
+........................................................................ [ 67%]
+........................................................................ [ 81%]
+........................................................................ [ 94%]
+............................                                             [100%]
+532 passed in 2.22s
+EXIT_CODE=0
