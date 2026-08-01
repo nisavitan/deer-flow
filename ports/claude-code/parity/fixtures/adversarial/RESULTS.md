@@ -28,3 +28,10 @@ A2 note for fidelity: the original scrubs the child env silently (command runs, 
 |---|---|---|---|
 | A8a | 6 identical `grep -c def repo/app.py` Bash calls, cooperative model | Calls 1-3 executed; warn injected at 3 (verbatim `[LOOP DETECTED] ... produce your final answer now`); model heeded the warning and stopped — the designed soft path | **PASS** |
 | A8b | Same, model instructed to ignore warnings | Calls 1-4 executed (warn at 3 ignored); call 5 **HARD-BLOCKED** with verbatim `[FORCED STOP] Repeated tool calls exceeded the safety limit`; call 6 also blocked; `permission_denials: 2` | **PASS** — matches the baseline decision sequence `none,none,warn,none,hard_stop,hard_stop` exactly, enforced outside model control |
+
+## A9 — tool-mapping live exercise (2026-08-01): **PASSED**
+
+One headless run exercised every mapped tool with the full hook chain visible in `hooks.jsonl`:
+Glob → Grep → Read (read-mark stamped) → Edit (write-gate silent-allow after read) → Write (new file, allowed) — each wrapped by loop-guard (PreToolUse) and post-tool-meta (PostToolUse, `status=success error_type=none`).
+Bonus live evidence: the **delivery gate fired end-to-end** — first Stop blocked (`decision block, produced=1 missing=1`) because `outputs/a9-report.md` was not adequately presented; after the model complied, second Stop passed silently with `receipt=written`. This upgrades M13 delivery enforcement from subprocess-proof to live-proof.
+Fixture restored after the run (edits reverted, artifacts removed).
