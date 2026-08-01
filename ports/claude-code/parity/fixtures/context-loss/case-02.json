@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "case_id": "resume-recall-08-paraphrase",
+
+  "_about": "The harder half of the M14 context-loss measurement. Eight items, all of them CONCEPTS rather than tokens: nothing here is a ticket id or a hex sha that a model either reproduces verbatim or does not. Each item therefore carries a paraphrase-tolerant alias set, so a session that genuinely retained the idea scores as recall even when it re-words it. Run this alongside case-01: the spread between the two scores is the measurement that matters — case-01 measures token survival, case-02 measures meaning survival, and a large gap says compaction kept the gist and dropped the specifics.",
+
+  "_kind_mapping": "Same mapping as case-01: the scorer knows fact / decision / file only, so CONSTRAINTS sit in `decisions` tagged `constraint: true`. No `constraints` array — parseContextSnapshot would silently drop it.",
+
+  "_alias_rule": "matchTargets() ORs `text` with every alias, after normalizeForMatch() lowercases and collapses whitespace, and matching is substring containment against the concatenated answers. Aliases are therefore kept SHORT and atomic — a long alias is a conjunction the model has to reproduce whole, which defeats the point. Adding an alias can only ever raise the score, so an alias must be something that genuinely means the item and nothing else.",
+
+  "_seed_field": "`text` is the match key; `seed` is the natural sentence the RUNBOOK puts in the seed prompt. The scorer never reads `seed`; every `seed` contains its item's `text` verbatim, which the CLI test asserts.",
+
+  "facts": [
+    {
+      "id": "f1",
+      "text": "the loop guard warns on the third repeat and hard-stops on the fifth",
+      "aliases": [
+        "warn at 3",
+        "warns at three",
+        "hard stop at 5",
+        "hard-stops at five",
+        "third repeat",
+        "fifth repeat"
+      ],
+      "seed": "The loop guard warns on the third repeat and hard-stops on the fifth; those are the only two thresholds."
+    },
+    {
+      "id": "f2",
+      "text": "the delegation ledger is capped at 50 entries",
+      "aliases": ["50 entries", "fifty entries", "cap of 50", "ledger cap"],
+      "seed": "The delegation ledger is capped at 50 entries, and older entries fall off the end."
+    },
+    {
+      "id": "f3",
+      "text": "at most three subagents run concurrently and six in total per run",
+      "aliases": [
+        "3 concurrent",
+        "three at a time",
+        "max 6 total",
+        "six in total",
+        "concurrency limit of three"
+      ],
+      "seed": "At most three subagents run concurrently and six in total per run."
+    }
+  ],
+
+  "decisions": [
+    {
+      "id": "d1",
+      "text": "recall is scored literally with aliases, never by an LLM judge",
+      "aliases": [
+        "no llm judge",
+        "literal matching",
+        "deterministic scorer",
+        "no model in the loop",
+        "alias matching"
+      ],
+      "seed": "We decided recall is scored literally with aliases, never by an LLM judge, because a judge is not reproducible."
+    },
+    {
+      "id": "d2",
+      "constraint": true,
+      "text": "a hook failure must never be worse for the user than the guard not firing",
+      "aliases": [
+        "fail open",
+        "fail-open",
+        "hooks exit 0",
+        "never block on a hook fault",
+        "degrade silently"
+      ],
+      "seed": "Hard constraint: a hook failure must never be worse for the user than the guard not firing."
+    },
+    {
+      "id": "d3",
+      "constraint": true,
+      "text": "every divergence from the original is recorded in DISCREPANCIES.md rather than left silent",
+      "aliases": [
+        "discrepancies.md",
+        "silent divergence is a defect",
+        "record every divergence",
+        "document the deltas"
+      ],
+      "seed": "Hard constraint: every divergence from the original is recorded in DISCREPANCIES.md rather than left silent."
+    },
+    {
+      "id": "d4",
+      "text": "the port measures context loss instead of asserting that context survived",
+      "aliases": [
+        "measure the loss",
+        "measure context loss",
+        "make the loss a number",
+        "rather than asserting survival"
+      ],
+      "seed": "Our stance is that the port measures context loss instead of asserting that context survived."
+    }
+  ],
+
+  "files": [
+    {
+      "id": "p1",
+      "text": "src/summary/context-loss.ts",
+      "aliases": ["the scorer", "the recall scorer", "context loss module"],
+      "seed": "The scorer that implements it is src/summary/context-loss.ts.",
+      "_note": "basename context-loss.ts counts on its own via matchTargets()"
+    }
+  ],
+
+  "probes": [
+    {
+      "id": "q1",
+      "question": "Remind me of the three numeric policies I gave you at the start: the repeat thresholds, the ledger cap, and the subagent limits.",
+      "expects": ["f1", "f2", "f3"]
+    },
+    {
+      "id": "q2",
+      "question": "How did we decide recall would be judged, and why not the obvious alternative?",
+      "expects": ["d1"]
+    },
+    {
+      "id": "q3",
+      "question": "What is the rule about a hook that crashes, and what do we do with any behaviour that differs from the original?",
+      "expects": ["d2", "d3"]
+    },
+    {
+      "id": "q4",
+      "question": "What is our stance on context survival across compaction, and which module implements it?",
+      "expects": ["d4", "p1"]
+    }
+  ]
+}

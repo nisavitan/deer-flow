@@ -29,6 +29,7 @@ import { stateRoot as resolveStateRoot, resolveProjectRoot } from '../state/path
 import { readGitHead } from '../resume/git-head.js';
 import { ORPHAN_EXPIRY_MS, listStateThreads, recoverOrphanRuns } from '../resume/recovery.js';
 import { buildResumePlans, renderResumeLine } from '../resume/resume-plan.js';
+import { appendHookLog } from '../middleware/hook-runtime.js';
 /** Milliseconds to wait for the hook payload before giving up. Mirrors env-guard.ts. */
 const STDIN_TIMEOUT_MS = 2000;
 /**
@@ -134,6 +135,15 @@ async function main() {
         currentCommitSha: head.commitSha,
         currentBranch: head.branch,
     });
+    // O3: run-meta.json records WHICH runs were recovered; this line records that the scan ran at all
+    // — the difference between "nothing was orphaned" and "the hook never fired".
+    appendHookLog({
+        hook: 'session-recover',
+        event: 'SessionStart',
+        thread: sessionId,
+        decision: result.additionalContext === null ? 'silent' : 'context',
+        summary: `recovered=${result.outcome.interrupted.length} threads=${result.reports.length}`,
+    }, { ...process.env, CLAUDE_PROJECT_DIR: projectRoot });
     if (result.additionalContext !== null)
         process.stdout.write(renderHookOutput(result.additionalContext));
 }

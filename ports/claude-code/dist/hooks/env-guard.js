@@ -17,6 +17,7 @@
 // PreToolUse hookSpecificOutput with permissionDecision "deny" surfaces the reason to
 // the model and records it in `permission_denials`.
 import { detectSecretExposure, isSecretLikeName } from '../policy/env-scrub.js';
+import { appendHookLog, resolveThreadId } from '../middleware/hook-runtime.js';
 /** Milliseconds to wait for the hook payload before giving up and allowing the call. */
 const STDIN_TIMEOUT_MS = 2000;
 /** Matches an `export`/`env` keyword followed by one or more NAME=VALUE assignments. */
@@ -121,6 +122,15 @@ async function main() {
     if (typeof command !== 'string' || command.length === 0)
         return;
     const reason = evaluateCommand(command, process.env);
+    // O3: this hook leaves no durable artefact of its own, so the log line is the ONLY observable a
+    // scenario has for an allowed command. Written after the decision, never before it.
+    appendHookLog({
+        hook: 'env-guard',
+        event: 'PreToolUse',
+        thread: resolveThreadId(payload, process.env),
+        decision: reason === null ? 'silent' : 'deny',
+        ...(reason === null ? {} : { summary: reason }),
+    });
     if (reason !== null)
         deny(reason);
 }

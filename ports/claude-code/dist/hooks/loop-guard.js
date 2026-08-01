@@ -24,7 +24,7 @@
 import { pathToFileURL } from 'node:url';
 import { LOOP_STOP_REASON, parseLoopDetectionState, step, } from '../middleware/loop-detection.js';
 import { isGuardedToolName, toDeerflowToolCall } from '../middleware/tool-adapter.js';
-import { emitHookOutput, parseHookPayload, readStdin, resolveThreadId, } from '../middleware/hook-runtime.js';
+import { appendHookLog, emitHookOutput, parseHookPayload, readStdin, resolveThreadId, } from '../middleware/hook-runtime.js';
 import { threadStateFile } from '../state/paths.js';
 import { readStateFile, updateStateFile } from '../state/atomic-io.js';
 import { applyRunTransition, runMetaPath } from '../state/run-meta.js';
@@ -104,6 +104,14 @@ async function main() {
     if (payload === null)
         return;
     const output = evaluateLoopGuard(payload, { now: new Date().toISOString() });
+    // O3: the deny/warn decision, alongside the counters loop-detection.json already persists.
+    appendHookLog({
+        hook: 'loop-guard',
+        event: 'PreToolUse',
+        thread: resolveThreadId(payload, process.env),
+        decision: output === null ? 'silent' : output.deny !== undefined ? 'deny' : 'context',
+        summary: `tool=${typeof payload.tool_name === 'string' ? payload.tool_name : 'unknown'}`,
+    });
     if (output !== null)
         emitHookOutput('PreToolUse', output);
 }

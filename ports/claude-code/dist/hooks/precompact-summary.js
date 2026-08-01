@@ -24,9 +24,18 @@
 //
 // Registration is NOT applied here: hooks/hooks.json is owned by another lane. The request is
 // appended to hooks/REGISTRATION-REQUESTS.md.
+//
+// M14 ADDITION — the compaction-boundary memory flush. `parity/DISCREPANCIES.md` §M8 entry 4 recorded
+// a real loss window: upstream's `before_summarization` hooks run `memory_flush_hook` so the messages
+// about to disappear reach durable memory, and the port had no counterpart until the memory queue
+// existed (M9). It does now, so this hook enqueues the conversation tail as well as writing the
+// digest. The Stop hook (src/hooks/memory-extract.ts) remains the ROUTINE capture path; this is the
+// boundary case it cannot cover, because compaction can happen mid-turn, before any Stop fires.
 import { pathToFileURL } from 'node:url';
-import { buildSummaryDigest, renderDigestText } from '../summary/digest.js';
+import { buildSummaryDigest, readTranscript, renderDigestText } from '../summary/digest.js';
 import { applySummary, summaryPath } from '../summary/summary-state.js';
+import { appendQueueEntry, extractTurn } from '../memory/queue.js';
+import { appendHookLog } from '../middleware/hook-runtime.js';
 import { THREAD_ID_PATTERN, threadStateDir } from '../state/paths.js';
 /** Milliseconds to wait for the hook payload before giving up. Mirrors env-guard.ts. */
 const STDIN_TIMEOUT_MS = 2000;
@@ -53,6 +62,75 @@ export function resolveThreadId(payload, env) {
 export function resolveTrigger(payload) {
     return payload.trigger === 'auto' || payload.trigger === 'manual' ? payload.trigger : 'unknown';
 }
+const STOOD_DOWN = { filePath: null, digest: null, queued: 0 };
+/**
+ * Enqueue the conversation tail into the memory queue at the compaction boundary.
+ *
+ * The same last-user + last-assistant pair `src/hooks/memory-extract.ts` captures on Stop, read from
+ * the same `transcript_path` this hook already parses for the digest, through the same
+ * `appendQueueEntry` — the ONLY difference is `source`, so a queue consumer can tell a boundary
+ * flush from the routine one. A duplicate is harmless: the extraction pass is idempotent over
+ * content, and a lost pre-compaction turn is not recoverable at all.
+ *
+ * Never throws (rule 2): memory capture must not cost the digest, let alone the compaction.
+ *
+ * @returns 1 when an entry was appended, 0 otherwise.
+ */
+function flushConversationTail(payload, options) {
+    try {
+        const raw = readTranscript(typeof payload.transcript_path === 'string' ? payload.transcript_path : null);
+        if (raw === null)
+            return 0;
+        const turn = extractTurn(raw);
+        if (turn === null)
+            return 0;
+        appendQueueEntry({
+            capturedAt: options.now,
+            sessionId: typeof payload.session_id === 'string' ? payload.session_id : null,
+            user: turn.user,
+            assistant: turn.assistant,
+            source: 'precompact-flush',
+        }, options.env ?? process.env);
+        return 1;
+    }
+    catch (error) {
+        process.stderr.write(`deerflow precompact-summary: memory flush skipped (${error instanceof Error ? error.message : String(error)})\n`);
+        return 0;
+    }
+}
+/**
+ * Build and persist the digest for one PreCompact event, then flush the conversation tail to the
+ * memory queue.
+ *
+ * Never throws — see rule 2 in the file header.
+ */
+export function snapshotSummaryDetailed(payload, options) {
+    const env = options.env ?? process.env;
+    const threadId = resolveThreadId(payload, env);
+    if (threadId === null)
+        return STOOD_DOWN;
+    const transcriptPath = typeof payload.transcript_path === 'string' ? payload.transcript_path : null;
+    const trigger = resolveTrigger(payload);
+    let digest = null;
+    let filePath = null;
+    try {
+        const stateDir = threadStateDir(threadId, env);
+        const target = summaryPath(threadId, env);
+        digest = buildSummaryDigest({ stateDir, now: options.now, trigger, transcriptPath });
+        applySummary(target, {
+            summaryText: renderDigestText(digest),
+            updatedBy: 'precompact',
+            digest,
+            compaction: { at: options.now, trigger, updated_by: 'precompact' },
+        }, { now: options.now });
+        filePath = target;
+    }
+    catch (error) {
+        process.stderr.write(`deerflow precompact-summary: digest not written (${error instanceof Error ? error.message : String(error)})\n`);
+        return { filePath: null, digest: null, queued: 0 };
+    }
+    return { filePath, digest, queued: flushConversationTail(payload, options) };
+}
 /**
  * Build and persist the digest for one PreCompact event.
  *
@@ -60,28 +138,7 @@ export function resolveTrigger(payload) {
  *          Never throws — see rule 2 in the file header.
  */
 export function snapshotSummary(payload, options) {
-    const env = options.env ?? process.env;
-    const threadId = resolveThreadId(payload, env);
-    if (threadId === null)
-        return null;
-    const transcriptPath = typeof payload.transcript_path === 'string' ? payload.transcript_path : null;
-    const trigger = resolveTrigger(payload);
-    try {
-        const stateDir = threadStateDir(threadId, env);
-        const filePath = summaryPath(threadId, env);
-        const digest = buildSummaryDigest({ stateDir, now: options.now, trigger, transcriptPath });
-        applySummary(filePath, {
-            summaryText: renderDigestText(digest),
-            updatedBy: 'precompact',
-            digest,
-            compaction: { at: options.now, trigger, updated_by: 'precompact' },
-        }, { now: options.now });
-        return filePath;
-    }
-    catch (error) {
-        process.stderr.write(`deerflow precompact-summary: digest not written (${error instanceof Error ? error.message : String(error)})\n`);
-        return null;
-    }
+    return snapshotSummaryDetailed(payload, options).filePath;
 }
 function readStdin() {
     return new Promise((resolve) => {
@@ -117,7 +174,19 @@ async function main() {
     }
     if (typeof payload !== 'object' || payload === null)
         return;
-    snapshotSummary(payload, { now: new Date().toISOString() });
+    const threadId = resolveThreadId(payload, process.env);
+    const outcome = snapshotSummaryDetailed(payload, { now: new Date().toISOString() });
+    // O3: summary.json shows the digest that survived; this line also records the boundary flush and
+    // separates "no thread to snapshot" (silent) from "had one and could not write it" (error).
+    appendHookLog({
+        hook: 'precompact-summary',
+        event: 'PreCompact',
+        thread: threadId,
+        decision: threadId !== null && outcome.filePath === null ? 'error' : 'silent',
+        summary: `trigger=${resolveTrigger(payload)} objectives=${outcome.digest?.objectives.length ?? 0} ` +
+            `todos=${outcome.digest?.open_todos.length ?? 0} artifacts=${outcome.digest?.artifacts.length ?? 0} ` +
+            `messages=${outcome.digest?.source_message_count ?? 0} queued=${outcome.queued}`,
+    });
 }
 // Only consume stdin when invoked as a program: the unit tests import `snapshotSummary`
 // from this module, and an import must not block on a stdin read.

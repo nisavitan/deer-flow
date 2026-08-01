@@ -185,15 +185,15 @@ the ones with an observable consequence.
 | **Blast radius** | None today. A future port path that does generate a summary inherits the exact wrapper and the exact escaping; only the wording of the base instruction differs from a DeerFlow deployment. |
 | **Verified** | `src/summary/wrapper.test.ts` — frozen-source token extraction, escaping/breakout tests, and an explicit assertion that the unreachable branch is retained. |
 
-### 4. Memory flush at the compaction boundary — **blocked (until M9)**
+### 4. Memory flush at the compaction boundary — **relocated**
 
 | | |
 |---|---|
 | **Original** | `before_summarization` hooks fire once a replacement summary exists; the lead chain attaches `memory_flush_hook` (when `memory.enabled`) so pre-compaction messages reach durable memory. Subagents pass `skip_memory_flush=True` so their internal turns do not pollute the parent thread. [summarization_middleware.py:508-518, 625-647, 743-747] |
-| **Port** | Not implemented. The port's memory queue is M9. |
-| **Blast radius** | **A real loss window, open until M9:** information that existed only inside the compacted window is not written to durable memory. |
-| **Mitigation** | The `PreCompact` hook already runs at exactly the right instant, so M9 adds the enqueue call at that point and nothing else. |
-| **Verified** | Declared absence. |
+| **Port** | **Implemented at M14.** `src/hooks/precompact-summary.ts` enqueues the conversation tail — the last user message and the last assistant response, from the same `transcript_path` it already parses for the digest — through the same `appendQueueEntry` the Stop hook uses, tagged `source: 'precompact-flush'`. The flush runs after the digest write and is independently fail-open: a queue failure costs the flush, never the digest and never the compaction. |
+| **Blast radius** | **The loss window is closed at the compaction boundary.** Two residual differences: (a) the carrier is the `PreCompact` event rather than a `before_summarization` callback, so the flush sees the transcript, not the message list about to be dropped — a turn that produced no assistant text yet enqueues nothing; (b) there is **no `skip_memory_flush` counterpart** — a subagent session that compacts flushes its own tail into its own queue. Extraction itself is still deferred to the next turn (§M9 entry 1). |
+| **Mitigation** | The Stop hook (`src/hooks/memory-extract.ts`) remains the ROUTINE capture path — every turn boundary, unchanged. This hook covers the case the Stop hook structurally cannot: compaction firing *mid-turn*, before any Stop. A duplicate between the two is harmless (extraction is idempotent over content); a lost pre-compaction turn was not. |
+| **Verified** | `src/hooks/precompact-summary.test.ts` — "memory flush at the compaction boundary": the tail is enqueued with its `source` tag on the digest path; a half turn, a malformed transcript, and a stand-down each queue nothing and still exit 0. |
 
 ### 5. The port parses the session transcript — **degraded (defensive)**
 

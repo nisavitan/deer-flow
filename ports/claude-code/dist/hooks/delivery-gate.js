@@ -35,6 +35,7 @@ import { pathToFileURL } from 'node:url';
 import { DISABLE_DELIVERY_GATE_ENV_VAR, evaluateDelivery, extractFinalAssistantText, recordDeliveryReceipt, renderDeliveryBlockReason, } from '../artifacts/delivery.js';
 import { changedOutputPaths, defaultScanRoots, diffSnapshots, hasChanges, readPreSnapshot, scanWorkspace, workspacePrePath, } from '../artifacts/snapshot.js';
 import { applyWorkspaceChanges, buildChangesEntry, workspaceChangesPath, } from '../artifacts/workspace-changes.js';
+import { appendHookLog } from '../middleware/hook-runtime.js';
 import { runMetaPath } from '../state/run-meta.js';
 import { resolveProjectRoot, THREAD_ID_PATTERN } from '../state/paths.js';
 /** Milliseconds to wait for the hook payload before giving up. Mirrors stop-goal-evaluator.ts. */
@@ -191,7 +192,19 @@ async function main() {
     }
     if (typeof payload !== 'object' || payload === null)
         return;
-    const output = renderHookOutput(evaluateDeliveryGate(payload, { now: new Date().toISOString() }));
+    const outcome = evaluateDeliveryGate(payload, { now: new Date().toISOString() });
+    const output = renderHookOutput(outcome);
+    // O3: the receipt in run-meta.json is put-if-absent and only written on the final word, so a
+    // stand-down mid-chain has no other trace. This line records every stop the gate saw.
+    const verdict = outcome.decision.verdict;
+    appendHookLog({
+        hook: 'delivery-gate',
+        event: 'Stop',
+        thread: outcome.threadId,
+        decision: outcome.decision.block ? 'block' : 'silent',
+        summary: `produced=${verdict?.produced_paths.length ?? 0} missing=${verdict?.missing.length ?? 0} ` +
+            `recorded=${outcome.recorded} receipt=${outcome.receipt === null ? 'none' : 'written'}`,
+    });
     if (output.length > 0)
         process.stdout.write(output);
 }

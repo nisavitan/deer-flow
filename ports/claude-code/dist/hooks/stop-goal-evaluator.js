@@ -30,6 +30,7 @@ import { pathToFileURL } from 'node:url';
 import { formatVisibleConversation, latestVisibleAssistantSignature, } from '../goal-loop/evaluator-prompt.js';
 import { decideStopHook } from '../goal-loop/orchestrate.js';
 import { readGoal, writeGoal } from '../goal-loop/goal-cli.js';
+import { appendHookLog } from '../middleware/hook-runtime.js';
 import { goalPath } from '../state/goal.js';
 import { THREAD_ID_PATTERN } from '../state/paths.js';
 /** Milliseconds to wait for the hook payload before giving up. Mirrors precompact-summary.ts. */
@@ -188,7 +189,19 @@ async function main() {
     }
     if (typeof payload !== 'object' || payload === null)
         return;
-    const output = renderHookOutput(evaluateStop(payload, { now: new Date().toISOString() }));
+    const outcome = evaluateStop(payload, { now: new Date().toISOString() });
+    const output = renderHookOutput(outcome);
+    // O3: goal.json already carries the counter, but only its final value — this line records the
+    // decision AT each stop, which is what a continuation-cap scenario counts.
+    appendHookLog({
+        hook: 'stop-goal-evaluator',
+        event: 'Stop',
+        thread: outcome.threadId,
+        // A null decision with a resolved thread is the caught-fault path (rule 2), not a stand-down.
+        decision: output.length > 0 ? 'block' : outcome.decision === null && outcome.threadId !== null ? 'error' : 'silent',
+        summary: `continuations=${outcome.decision?.continuationCount ?? 0} no_progress=${outcome.decision?.noProgressCount ?? 0} ` +
+            `stand_down=${outcome.decision?.standDownReason ?? 'none'} persisted=${outcome.persisted}`,
+    });
     if (output.length > 0)
         process.stdout.write(output);
 }

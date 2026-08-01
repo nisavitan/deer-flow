@@ -24,7 +24,13 @@ import {
   readMarksPath,
 } from '../middleware/read-marks.js'
 import { READ_TOOL_NAME } from '../middleware/tool-adapter.js'
-import { parseHookPayload, readStdin, resolveThreadId, type HookPayload } from '../middleware/hook-runtime.js'
+import {
+  appendHookLog,
+  parseHookPayload,
+  readStdin,
+  resolveThreadId,
+  type HookPayload,
+} from '../middleware/hook-runtime.js'
 
 export interface StampOptions {
   readonly now: string
@@ -71,7 +77,16 @@ async function main(): Promise<void> {
   const payload = parseHookPayload(await readStdin())
   if (payload === null) return
   // No stdout protocol: PostToolUse on Read has no decision to make and nothing to tell the model.
-  stampReadFromPayload(payload, { now: new Date().toISOString() })
+  const marked = stampReadFromPayload(payload, { now: new Date().toISOString() })
+  // O3: always `silent` — this hook never speaks. The line records WHICH path got a mark, which is
+  // the fact a write-gate scenario needs to correlate a later deny against.
+  appendHookLog({
+    hook: 'read-mark',
+    event: 'PostToolUse',
+    thread: resolveThreadId(payload, process.env),
+    decision: 'silent',
+    summary: `marked=${marked ?? 'none'}`,
+  })
 }
 
 const entry = process.argv[1]

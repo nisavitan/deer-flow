@@ -8,7 +8,9 @@
 // THE ONE RULE ALL FIVE HOOKS FOLLOW: a hook fault must never be visible to the user as anything
 // worse than the guard not firing. Every function here either returns a fallback or is documented
 // as throwing, and every hook wraps its main in try/catch and exits 0.
-import { THREAD_ID_PATTERN } from '../state/paths.js'
+import { appendFileSync, mkdirSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { resolveProjectRoot, THREAD_ID_PATTERN } from '../state/paths.js'
 
 /** Milliseconds to wait for the hook payload before giving up. Matches src/hooks/env-guard.ts. */
 export const STDIN_TIMEOUT_MS = 2000
@@ -125,6 +127,70 @@ export function renderHookOutput(event: HookEventName, output: HookOutput): stri
 export function emitHookOutput(event: HookEventName, output: HookOutput): void {
   const rendered = renderHookOutput(event, output)
   if (rendered !== null) process.stdout.write(`${rendered}\n`)
+}
+
+// ---------------------------------------------------------------------------------------------
+// O3 — the hook observability log.
+//
+// `docs/claude-code-port/parity-test-plan.md` §"Observable channels" defines O3 as
+// `.deerflow/logs/hooks.jsonl`, "one structured line per hook", and states that the port MUST
+// implement it for the Tier-2 live suite to be executable. Three of the twelve hooks — env-guard,
+// post-tool-meta, turn-context — leave NO durable artefact by design (a deny and two
+// `additionalContext` injections), so O3 is the only channel that can observe them at all.
+//
+// It is an OBSERVABILITY channel, never a control path: `appendHookLog` swallows every failure,
+// performs one `appendFileSync` (atomic enough for line-sized writes on every platform the port
+// targets), and is called after the hook's decision is already made. A hook whose log write fails
+// still emits exactly the same decision.
+// ---------------------------------------------------------------------------------------------
+
+/** Directory (relative to the project root) that holds the port's log tree. */
+export const LOG_DIR_SEGMENTS = ['.deerflow', 'logs'] as const
+
+/** O3's file name below the log root. */
+export const HOOK_LOG_FILE_NAME = 'hooks.jsonl'
+
+/**
+ * What one hook did, in the vocabulary a scenario asserts on.
+ *
+ * `silent` — stood down or had nothing to say; `context` — injected `additionalContext`;
+ * `deny` — refused a PreToolUse call; `block` — refused a Stop; `error` — the hook's own work
+ * failed and it degraded (never a tool error, which rides `summary`).
+ */
+export type HookLogDecision = 'silent' | 'context' | 'deny' | 'block' | 'error'
+
+/** One O3 record, before the timestamp is stamped. */
+export interface HookLogEntry {
+  /** The hook script's name, e.g. `write-gate`. */
+  readonly hook: string
+  /** The Claude Code event it is registered on, e.g. `PreToolUse`. */
+  readonly event: string
+  /** The thread whose state the hook acted on, or `null` when it could not resolve one. */
+  readonly thread: string | null
+  readonly decision: HookLogDecision
+  /** Free-form, hook-specific detail: a path, a count, a classification. */
+  readonly summary?: string
+}
+
+/** `<CLAUDE_PROJECT_DIR || cwd>/.deerflow/logs/hooks.jsonl`. */
+export function hookLogPath(env: NodeJS.ProcessEnv = process.env): string {
+  return join(resolveProjectRoot(env), ...LOG_DIR_SEGMENTS, HOOK_LOG_FILE_NAME)
+}
+
+/**
+ * Append one JSON line to O3. **Never throws and never blocks a hook decision.**
+ *
+ * The timestamp is stamped here rather than by the caller so every line carries the same clock and
+ * no hook can forget it; `entry` follows it, so a caller cannot overwrite `ts` either.
+ */
+export function appendHookLog(entry: HookLogEntry, env: NodeJS.ProcessEnv = process.env): void {
+  try {
+    const filePath = hookLogPath(env)
+    mkdirSync(dirname(filePath), { recursive: true })
+    appendFileSync(filePath, `${JSON.stringify({ ts: new Date().toISOString(), ...entry })}\n`, 'utf8')
+  } catch {
+    // An unwritable log directory costs observability, never a decision.
+  }
 }
 
 /**

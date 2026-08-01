@@ -125,6 +125,9 @@ export function readQueue(env) {
                 sessionId: typeof parsed['sessionId'] === 'string' ? parsed['sessionId'] : null,
                 user: parsed['user'],
                 assistant: parsed['assistant'],
+                // Added only when present, so an entry written before `source` existed round-trips
+                // byte-identically through read → write.
+                ...(typeof parsed['source'] === 'string' ? { source: parsed['source'] } : {}),
             });
         }
         catch {

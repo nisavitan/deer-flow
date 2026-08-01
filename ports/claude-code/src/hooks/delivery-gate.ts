@@ -57,6 +57,7 @@ import {
   workspaceChangesPath,
   type WorkspaceChangesEntry,
 } from '../artifacts/workspace-changes.js'
+import { appendHookLog } from '../middleware/hook-runtime.js'
 import { runMetaPath } from '../state/run-meta.js'
 import { resolveProjectRoot, THREAD_ID_PATTERN } from '../state/paths.js'
 
@@ -271,7 +272,20 @@ async function main(): Promise<void> {
     return // Malformed payload: stand down.
   }
   if (typeof payload !== 'object' || payload === null) return
-  const output = renderHookOutput(evaluateDeliveryGate(payload, { now: new Date().toISOString() }))
+  const outcome = evaluateDeliveryGate(payload, { now: new Date().toISOString() })
+  const output = renderHookOutput(outcome)
+  // O3: the receipt in run-meta.json is put-if-absent and only written on the final word, so a
+  // stand-down mid-chain has no other trace. This line records every stop the gate saw.
+  const verdict = outcome.decision.verdict
+  appendHookLog({
+    hook: 'delivery-gate',
+    event: 'Stop',
+    thread: outcome.threadId,
+    decision: outcome.decision.block ? 'block' : 'silent',
+    summary:
+      `produced=${verdict?.produced_paths.length ?? 0} missing=${verdict?.missing.length ?? 0} ` +
+      `recorded=${outcome.recorded} receipt=${outcome.receipt === null ? 'none' : 'written'}`,
+  })
   if (output.length > 0) process.stdout.write(output)
 }
 

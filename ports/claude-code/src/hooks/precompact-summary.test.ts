@@ -6,9 +6,11 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { existsSync } from 'node:fs'
+import { queuePath, readQueue } from '../memory/queue.js'
 import { applyTodos } from '../state/todos.js'
 import { readSummary, summaryPath } from '../summary/summary-state.js'
-import { resolveThreadId, resolveTrigger, snapshotSummary } from './precompact-summary.js'
+import { resolveThreadId, resolveTrigger, snapshotSummary, snapshotSummaryDetailed } from './precompact-summary.js'
 
 const NOW = '2026-08-01T12:00:00Z'
 let root: string
@@ -111,6 +113,78 @@ describe('snapshotSummary', () => {
   it('does not read or write anything outside the thread state dir', () => {
     const written = snapshotSummary({ session_id: 'scoped' }, { now: NOW, env }) as string
     expect(written.startsWith(join(root, '.deerflow', 'state', 'scoped'))).toBe(true)
+  })
+})
+
+// DISCREPANCIES §M8 entry 4: the loss window at the compaction boundary. Upstream's
+// `before_summarization` hooks flush the messages about to disappear into durable memory; the port
+// does the same here, through the same queue the Stop hook uses.
+describe('memory flush at the compaction boundary', () => {
+  function transcriptWith(...records: { role: string; content: string }[]): string {
+    return `${records.map((record) => JSON.stringify({ type: record.role, message: record })).join('\n')}\n`
+  }
+
+  it('enqueues the conversation tail alongside the digest, tagged with its source', () => {
+    const transcript = join(root, 'session.jsonl')
+    writeFileSync(
+      transcript,
+      transcriptWith(
+        { role: 'user', content: 'first question' },
+        { role: 'assistant', content: 'first answer' },
+        { role: 'user', content: 'port the flush' },
+        { role: 'assistant', content: 'flushed at the boundary' },
+      ),
+    )
+
+    const outcome = snapshotSummaryDetailed({ session_id: 'thread-1', transcript_path: transcript }, { now: NOW, env })
+
+    expect(outcome.filePath).toBe(summaryPath('thread-1', env))
+    expect(outcome.queued).toBe(1)
+    // Last user + last assistant, exactly like the Stop hook's capture.
+    expect(readQueue(env)).toEqual([
+      {
+        capturedAt: NOW,
+        sessionId: 'thread-1',
+        user: 'port the flush',
+        assistant: 'flushed at the boundary',
+        source: 'precompact-flush',
+      },
+    ])
+  })
+
+  it('writes nothing to the queue when the transcript yields no complete turn', () => {
+    const transcript = join(root, 'partial.jsonl')
+    // A user message with no assistant reply: `extractTurn` requires both halves.
+    writeFileSync(transcript, transcriptWith({ role: 'user', content: 'only half a turn' }))
+
+    const outcome = snapshotSummaryDetailed({ session_id: 'thread-1', transcript_path: transcript }, { now: NOW, env })
+
+    expect(outcome.filePath).not.toBeNull()
+    expect(outcome.queued).toBe(0)
+    expect(existsSync(queuePath(env))).toBe(false)
+  })
+
+  it('never throws and never queues on a malformed transcript — the digest is still written', () => {
+    const transcript = join(root, 'corrupt.jsonl')
+    writeFileSync(transcript, '{ truncated\nnot json at all\n[]\n')
+
+    const outcome = snapshotSummaryDetailed({ session_id: 'thread-2', transcript_path: transcript }, { now: NOW, env })
+
+    expect(outcome.filePath).toBe(summaryPath('thread-2', env))
+    expect(outcome.queued).toBe(0)
+    expect(readQueue(env)).toEqual([])
+  })
+
+  it('does not flush when the hook stood down before writing a digest', () => {
+    const transcript = join(root, 'orphan.jsonl')
+    writeFileSync(transcript, transcriptWith({ role: 'user', content: 'q' }, { role: 'assistant', content: 'a' }))
+
+    expect(snapshotSummaryDetailed({ session_id: 'bad/id', transcript_path: transcript }, { now: NOW, env })).toEqual({
+      filePath: null,
+      digest: null,
+      queued: 0,
+    })
+    expect(readQueue(env)).toEqual([])
   })
 })
 

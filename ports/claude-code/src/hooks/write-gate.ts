@@ -32,6 +32,7 @@ import {
 } from '../middleware/read-marks.js'
 import { GATED_WRITE_TOOL_NAMES, NATIVE_READ_TOOL_NAME } from '../middleware/tool-adapter.js'
 import {
+  appendHookLog,
   emitHookOutput,
   parseHookPayload,
   readStdin,
@@ -94,6 +95,17 @@ async function main(): Promise<void> {
   const payload = parseHookPayload(await readStdin())
   if (payload === null) return
   const output = evaluateWriteGate(payload)
+  // O3: read-marks.json shows what was read; this line shows what the gate DECIDED about a write.
+  const toolInput = payload.tool_input
+  const filePath =
+    typeof toolInput === 'object' && toolInput !== null ? (toolInput as Record<string, unknown>)['file_path'] : undefined
+  appendHookLog({
+    hook: 'write-gate',
+    event: 'PreToolUse',
+    thread: resolveThreadId(payload, process.env),
+    decision: output === null ? 'silent' : 'deny',
+    summary: `path=${typeof filePath === 'string' ? filePath : 'unknown'}`,
+  })
   if (output !== null) emitHookOutput('PreToolUse', output)
 }
 

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "rev": 1,
+  "updated_at": "2026-08-01T14:00:00.000Z",
+  "run": {
+    "schema_version": 1,
+    "run_id": "run-smoke",
+    "thread_id": "smoke-thread",
+    "commit_sha": "deadbeef",
+    "status": "running",
+    "stop_reason": null,
+    "error": null,
+    "started_at": "2026-08-01T14:00:00.000Z",
+    "updated_at": "2026-08-01T14:00:00.000Z",
+    "ended_at": null
+  }
+}

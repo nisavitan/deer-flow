@@ -20,9 +20,9 @@
 // it is meant to protect. Output is emitted only for an error/partial_success classification, or for
 // an oversized result.
 import { pathToFileURL } from 'node:url';
-import { TOOL_META_KEY, isProblemMeta, normalizeToolResult } from '../middleware/tool-meta.js';
+import { TOOL_META_KEY, isProblemMeta, normalizeToolResult, } from '../middleware/tool-meta.js';
 import { isGuardedToolName, toDeerflowMetaToolName } from '../middleware/tool-adapter.js';
-import { emitHookOutput, flattenToolResponse, inferResultStatus, parseHookPayload, readStdin, } from '../middleware/hook-runtime.js';
+import { appendHookLog, emitHookOutput, flattenToolResponse, inferResultStatus, parseHookPayload, readStdin, resolveThreadId, } from '../middleware/hook-runtime.js';
 /**
  * Soft warning threshold for an oversized tool result.
  *
@@ -51,12 +51,12 @@ export const NEXT_ACTION_GUIDANCE = {
 /** Escape hatch for a session that wants raw tool results with no classifier commentary. */
 export const DISABLE_ENV_VAR = 'DEERFLOW_DISABLE_TOOL_META';
 /**
- * Classify one PostToolUse event.
+ * Run the taxonomy over one PostToolUse event.
  *
- * @returns the hook output to emit, or `null` on the silent path (unguarded tool, disabled, or a
- *          clean success of normal size).
+ * @returns the classification, or `null` when the hook does not apply at all (disabled, or a tool
+ *          outside the guarded set).
  */
-export function evaluateToolResult(payload, options = {}) {
+export function classifyToolResult(payload, options = {}) {
     const env = options.env ?? process.env;
     if (env[DISABLE_ENV_VAR] === '1')
         return null;
@@ -69,7 +69,22 @@ export function evaluateToolResult(payload, options = {}) {
         content,
         status: inferResultStatus(payload.tool_response),
     });
-    const oversized = content.length > OVERSIZED_RESULT_CHARS;
+    return { toolName, meta, contentLength: content.length, oversized: content.length > OVERSIZED_RESULT_CHARS };
+}
+/**
+ * Classify one PostToolUse event.
+ *
+ * @returns the hook output to emit, or `null` on the silent path (unguarded tool, disabled, or a
+ *          clean success of normal size).
+ */
+export function evaluateToolResult(payload, options = {}) {
+    return renderToolMetaOutput(classifyToolResult(payload, options));
+}
+/** Turn a classification into the model-facing block, or `null` when there is nothing worth saying. */
+export function renderToolMetaOutput(classification) {
+    if (classification === null)
+        return null;
+    const { toolName, meta, contentLength, oversized } = classification;
     if (!isProblemMeta(meta) && !oversized)
         return null;
     const lines = [];
@@ -80,7 +95,7 @@ export function evaluateToolResult(payload, options = {}) {
         }
     }
     if (oversized) {
-        lines.push(`This ${toolName} result is ${content.length} characters, past the ${OVERSIZED_RESULT_CHARS}-character budget; ` +
+        lines.push(`This ${toolName} result is ${contentLength} characters, past the ${OVERSIZED_RESULT_CHARS}-character budget; ` +
             'narrow the next call (a range, a filter, a more specific query) instead of re-reading the whole thing.');
     }
     return { additionalContext: lines.join('\n') };
@@ -89,7 +104,20 @@ async function main() {
     const payload = parseHookPayload(await readStdin());
     if (payload === null)
         return;
-    const output = evaluateToolResult(payload);
+    const classification = classifyToolResult(payload);
+    const output = renderToolMetaOutput(classification);
+    // O3: the taxonomy leaves no durable artefact, and a classification the model ignores is
+    // otherwise unobservable — this line is the whole evidence base for S9/S11/S16.
+    if (classification !== null) {
+        appendHookLog({
+            hook: 'post-tool-meta',
+            event: 'PostToolUse',
+            thread: resolveThreadId(payload, process.env),
+            decision: output === null ? 'silent' : 'context',
+            summary: `tool=${classification.toolName} status=${classification.meta.status} ` +
+                `error_type=${classification.meta.error_type ?? 'none'} oversized=${classification.oversized}`,
+        });
+    }
     if (output !== null)
         emitHookOutput('PostToolUse', output);
 }

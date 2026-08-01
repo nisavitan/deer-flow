@@ -20,6 +20,7 @@
 // `QueueFull` update and re-feeds it next turn because the watermark does not advance.
 import { readFileSync } from 'node:fs';
 import { appendQueueEntry, extractTurn } from '../memory/queue.js';
+import { appendHookLog, resolveThreadId } from '../middleware/hook-runtime.js';
 /** Milliseconds to wait for the hook payload before giving up. */
 const STDIN_TIMEOUT_MS = 2000;
 function readStdin() {
@@ -54,25 +55,40 @@ async function main() {
     catch {
         return;
     }
-    const transcriptPath = payload.transcript_path;
-    if (typeof transcriptPath !== 'string' || transcriptPath === '')
-        return;
-    let transcript;
+    // O3: one line per Stop, whatever happened. `queued` is the fact a memory scenario asserts on;
+    // the queue file itself only shows the successes.
+    let queued = 0;
     try {
-        transcript = readFileSync(transcriptPath, 'utf8');
+        const transcriptPath = payload.transcript_path;
+        if (typeof transcriptPath !== 'string' || transcriptPath === '')
+            return;
+        let transcript;
+        try {
+            transcript = readFileSync(transcriptPath, 'utf8');
+        }
+        catch {
+            return;
+        }
+        const turn = extractTurn(transcript);
+        if (turn === null)
+            return;
+        appendQueueEntry({
+            capturedAt: new Date().toISOString(),
+            sessionId: typeof payload.session_id === 'string' ? payload.session_id : null,
+            user: turn.user,
+            assistant: turn.assistant,
+        });
+        queued = 1;
     }
-    catch {
-        return;
+    finally {
+        appendHookLog({
+            hook: 'memory-extract',
+            event: 'Stop',
+            thread: resolveThreadId(payload, process.env),
+            decision: 'silent',
+            summary: `queued=${queued}`,
+        });
     }
-    const turn = extractTurn(transcript);
-    if (turn === null)
-        return;
-    appendQueueEntry({
-        capturedAt: new Date().toISOString(),
-        sessionId: typeof payload.session_id === 'string' ? payload.session_id : null,
-        user: turn.user,
-        assistant: turn.assistant,
-    });
 }
 try {
     await main();

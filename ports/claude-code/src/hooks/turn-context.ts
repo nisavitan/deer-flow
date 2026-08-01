@@ -26,7 +26,8 @@
 // A DATE IS ALLOWED HERE. Workflow scripts in this port may not read the clock (it breaks resume);
 // hooks are ordinary Node processes and the original called `datetime.now()` at exactly this point.
 import { pathToFileURL } from 'node:url'
-import { emitHookOutput, formatCurrentDate, parseHookPayload, readStdin, resolveThreadId, type HookOutput, type HookPayload } from '../middleware/hook-runtime.js'
+import { appendHookLog, emitHookOutput, formatCurrentDate, parseHookPayload, readStdin, resolveThreadId, type HookOutput, type HookPayload } from '../middleware/hook-runtime.js'
+import { createHash } from 'node:crypto'
 import { buildDurableContextBlock } from '../summary/durable-context.js'
 import { readStateFile } from '../state/atomic-io.js'
 import { threadStateDir } from '../state/paths.js'
@@ -113,6 +114,17 @@ async function main(): Promise<void> {
   const payload = parseHookPayload(await readStdin())
   if (payload === null) return
   const output = evaluateTurnContext(payload, { now: new Date() })
+  // O3: the injection rides `additionalContext` and leaves nothing on disk. The sha256 of the block
+  // is what parity-test-plan S14 asserts ("injection logged with content sha256") — the digest, not
+  // the text, so the log never duplicates the durable state it projects.
+  const injected = output?.additionalContext ?? ''
+  appendHookLog({
+    hook: 'turn-context',
+    event: 'UserPromptSubmit',
+    thread: resolveThreadId(payload, process.env),
+    decision: output === null ? 'silent' : 'context',
+    summary: `chars=${injected.length} sha256=${createHash('sha256').update(injected).digest('hex')}`,
+  })
   if (output !== null) emitHookOutput('UserPromptSubmit', output)
 }
 

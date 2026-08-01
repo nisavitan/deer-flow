@@ -25,7 +25,7 @@
 import { pathToFileURL } from 'node:url';
 import { DISABLE_READ_GATE_ENV_VAR, checkWriteGate, hashFileIfReadable, loadReadMarks, readMarksPath, } from '../middleware/read-marks.js';
 import { GATED_WRITE_TOOL_NAMES, NATIVE_READ_TOOL_NAME } from '../middleware/tool-adapter.js';
-import { emitHookOutput, parseHookPayload, readStdin, resolveThreadId, } from '../middleware/hook-runtime.js';
+import { appendHookLog, emitHookOutput, parseHookPayload, readStdin, resolveThreadId, } from '../middleware/hook-runtime.js';
 export { DISABLE_READ_GATE_ENV_VAR };
 /**
  * Evaluate one PreToolUse Write/Edit event.
@@ -76,6 +76,16 @@ async function main() {
     if (payload === null)
         return;
     const output = evaluateWriteGate(payload);
+    // O3: read-marks.json shows what was read; this line shows what the gate DECIDED about a write.
+    const toolInput = payload.tool_input;
+    const filePath = typeof toolInput === 'object' && toolInput !== null ? toolInput['file_path'] : undefined;
+    appendHookLog({
+        hook: 'write-gate',
+        event: 'PreToolUse',
+        thread: resolveThreadId(payload, process.env),
+        decision: output === null ? 'silent' : 'deny',
+        summary: `path=${typeof filePath === 'string' ? filePath : 'unknown'}`,
+    });
     if (output !== null)
         emitHookOutput('PreToolUse', output);
 }

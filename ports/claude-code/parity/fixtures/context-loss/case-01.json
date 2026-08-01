@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "case_id": "resume-recall-12",
+
+  "_about": "Seeded-knowledge fixture for the M14 context-loss measurement. Twelve items are stated to a fresh session in the SEED prompt (see RUNBOOK.md), the session is then resumed (or compacted), and the six probes below are asked. `node dist/summary/context-loss-cli.js` scores the answers against these items. Exact-recall case: aliases are minimal on purpose, so the score is a floor, not a ceiling.",
+
+  "_kind_mapping": "The scorer (src/summary/context-loss.ts) recognises exactly three kinds: fact, decision, file — implied by the array an item sits in. CONSTRAINTS are modelled as `decisions` (a constraint is a decision in force) and tagged `constraint: true` below; the tag is documentation, the scorer ignores it. There is deliberately no `constraints` array: parseContextSnapshot would silently drop it, and a fixture that silently drops items is worse than one that names its mapping.",
+
+  "_seed_field": "`text` is the MATCH KEY — the shortest string that identifies the item, kept tight so a recall claim is unambiguous. `seed` is the natural sentence the RUNBOOK puts in the seed prompt, so the session is given a realistic briefing rather than a list of bare tokens. The scorer never reads `seed`; every `seed` contains its item's `text` verbatim, which the CLI test asserts.",
+
+  "facts": [
+    {
+      "id": "f1",
+      "text": "PARITY-7734",
+      "seed": "We are tracking this port under ticket PARITY-7734."
+    },
+    {
+      "id": "f2",
+      "text": "0950924",
+      "seed": "The port is measured against upstream bytedance/deer-flow at commit 0950924, and no other revision."
+    },
+    {
+      "id": "f3",
+      "text": "1800 seconds",
+      "aliases": ["1800s"],
+      "seed": "A subagent in the original harness times out after 1800 seconds, and we keep that budget."
+    },
+    {
+      "id": "f4",
+      "text": "fly.io",
+      "seed": "My deploy target is always fly.io, so assume it whenever I say 'deploy' without naming a host."
+    }
+  ],
+
+  "decisions": [
+    {
+      "id": "d1",
+      "text": "vitest over jest",
+      "aliases": ["vitest"],
+      "seed": "For the test runner we picked vitest over jest, because the port is ESM-first."
+    },
+    {
+      "id": "d2",
+      "text": "write-temp-then-rename",
+      "aliases": ["atomic rename"],
+      "seed": "Every state file is persisted write-temp-then-rename, so a reader never sees a torn file."
+    },
+    {
+      "id": "d3",
+      "constraint": true,
+      "text": "hooks make no network calls",
+      "aliases": ["no network calls in hooks"],
+      "seed": "Hard constraint: hooks make no network calls, ever — they must stay deterministic and fast."
+    },
+    {
+      "id": "d4",
+      "constraint": true,
+      "text": "nothing is written outside outputs/ and .deerflow/",
+      "aliases": ["outputs/ and .deerflow/"],
+      "seed": "Hard constraint: nothing is written outside outputs/ and .deerflow/ during a run."
+    },
+    {
+      "id": "d5",
+      "text": "TypeScript strict mode with noUncheckedIndexedAccess",
+      "aliases": ["nouncheckedindexedaccess"],
+      "seed": "We compile under TypeScript strict mode with noUncheckedIndexedAccess turned on, and we do not relax it."
+    }
+  ],
+
+  "files": [
+    {
+      "id": "p1",
+      "text": "ports/claude-code/src/middleware/loop-detection.ts",
+      "seed": "The repeat detector lives at ports/claude-code/src/middleware/loop-detection.ts.",
+      "_note": "basename loop-detection.ts also counts on its own — see matchTargets()"
+    },
+    {
+      "id": "p2",
+      "text": "ports/claude-code/parity/baseline/tool_meta.json",
+      "seed": "Its taxonomy vectors were extracted to ports/claude-code/parity/baseline/tool_meta.json."
+    },
+    {
+      "id": "p3",
+      "text": "docs/claude-code-port/traceability-matrix.md",
+      "seed": "The row-by-row port inventory is docs/claude-code-port/traceability-matrix.md."
+    }
+  ],
+
+  "probes": [
+    {
+      "id": "q1",
+      "question": "What is the ticket id for this work, and which upstream commit are we measuring the port against?",
+      "expects": ["f1", "f2"]
+    },
+    {
+      "id": "q2",
+      "question": "What is the subagent timeout, and where do I deploy?",
+      "expects": ["f3", "f4"]
+    },
+    {
+      "id": "q3",
+      "question": "Which test runner did we settle on, and how do state files get written to disk?",
+      "expects": ["d1", "d2"]
+    },
+    {
+      "id": "q4",
+      "question": "What are the two hard constraints on this codebase that I gave you?",
+      "expects": ["d3", "d4"]
+    },
+    {
+      "id": "q5",
+      "question": "Which TypeScript compiler settings did we agree on?",
+      "expects": ["d5"]
+    },
+    {
+      "id": "q6",
+      "question": "Name every file path I told you about, in full.",
+      "expects": ["p1", "p2", "p3"]
+    }
+  ]
+}

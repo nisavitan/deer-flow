@@ -27,6 +27,13 @@ export interface QueueEntry {
   readonly sessionId: string | null
   readonly user: string
   readonly assistant: string
+  /**
+   * Which capture point produced this entry. Absent means the routine Stop-hook path
+   * (src/hooks/memory-extract.ts); `precompact-flush` means the compaction-boundary flush
+   * (src/hooks/precompact-summary.ts, DISCREPANCIES §M8 entry 4). Extraction treats both alike —
+   * this is provenance, not policy.
+   */
+  readonly source?: string
 }
 
 function clamp(text: string): string {
@@ -125,6 +132,9 @@ export function readQueue(env?: NodeJS.ProcessEnv): QueueEntry[] {
         sessionId: typeof parsed['sessionId'] === 'string' ? parsed['sessionId'] : null,
         user: parsed['user'],
         assistant: parsed['assistant'],
+        // Added only when present, so an entry written before `source` existed round-trips
+        // byte-identically through read → write.
+        ...(typeof parsed['source'] === 'string' ? { source: parsed['source'] } : {}),
       })
     } catch {
       // A corrupt line never discards the rest of the batch.

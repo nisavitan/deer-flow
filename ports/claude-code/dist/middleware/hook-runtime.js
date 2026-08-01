@@ -8,7 +8,9 @@
 // THE ONE RULE ALL FIVE HOOKS FOLLOW: a hook fault must never be visible to the user as anything
 // worse than the guard not firing. Every function here either returns a fallback or is documented
 // as throwing, and every hook wraps its main in try/catch and exits 0.
-import { THREAD_ID_PATTERN } from '../state/paths.js';
+import { appendFileSync, mkdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { resolveProjectRoot, THREAD_ID_PATTERN } from '../state/paths.js';
 /** Milliseconds to wait for the hook payload before giving up. Matches src/hooks/env-guard.ts. */
 export const STDIN_TIMEOUT_MS = 2000;
 /**
@@ -103,6 +105,44 @@ export function emitHookOutput(event, output) {
     const rendered = renderHookOutput(event, output);
     if (rendered !== null)
         process.stdout.write(`${rendered}\n`);
+}
+// ---------------------------------------------------------------------------------------------
+// O3 — the hook observability log.
+//
+// `docs/claude-code-port/parity-test-plan.md` §"Observable channels" defines O3 as
+// `.deerflow/logs/hooks.jsonl`, "one structured line per hook", and states that the port MUST
+// implement it for the Tier-2 live suite to be executable. Three of the twelve hooks — env-guard,
+// post-tool-meta, turn-context — leave NO durable artefact by design (a deny and two
+// `additionalContext` injections), so O3 is the only channel that can observe them at all.
+//
+// It is an OBSERVABILITY channel, never a control path: `appendHookLog` swallows every failure,
+// performs one `appendFileSync` (atomic enough for line-sized writes on every platform the port
+// targets), and is called after the hook's decision is already made. A hook whose log write fails
+// still emits exactly the same decision.
+// ---------------------------------------------------------------------------------------------
+/** Directory (relative to the project root) that holds the port's log tree. */
+export const LOG_DIR_SEGMENTS = ['.deerflow', 'logs'];
+/** O3's file name below the log root. */
+export const HOOK_LOG_FILE_NAME = 'hooks.jsonl';
+/** `<CLAUDE_PROJECT_DIR || cwd>/.deerflow/logs/hooks.jsonl`. */
+export function hookLogPath(env = process.env) {
+    return join(resolveProjectRoot(env), ...LOG_DIR_SEGMENTS, HOOK_LOG_FILE_NAME);
+}
+/**
+ * Append one JSON line to O3. **Never throws and never blocks a hook decision.**
+ *
+ * The timestamp is stamped here rather than by the caller so every line carries the same clock and
+ * no hook can forget it; `entry` follows it, so a caller cannot overwrite `ts` either.
+ */
+export function appendHookLog(entry, env = process.env) {
+    try {
+        const filePath = hookLogPath(env);
+        mkdirSync(dirname(filePath), { recursive: true });
+        appendFileSync(filePath, `${JSON.stringify({ ts: new Date().toISOString(), ...entry })}\n`, 'utf8');
+    }
+    catch {
+        // An unwritable log directory costs observability, never a decision.
+    }
 }
 /**
  * `datetime.now().strftime("%Y-%m-%d, %A")` — the exact date string DynamicContextMiddleware built.

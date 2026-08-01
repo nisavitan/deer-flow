@@ -23,7 +23,13 @@
 // Registration is NOT applied here: hooks/hooks.json has a single owner. The request is appended to
 // hooks/REGISTRATION-REQUESTS.md.
 import { pathToFileURL } from 'node:url'
-import { parseHookPayload, readStdin, resolveThreadId, type HookPayload } from '../middleware/hook-runtime.js'
+import {
+  appendHookLog,
+  parseHookPayload,
+  readStdin,
+  resolveThreadId,
+  type HookPayload,
+} from '../middleware/hook-runtime.js'
 import { defaultScanRoots, scanWorkspace, workspacePrePath, writePreSnapshot } from '../artifacts/snapshot.js'
 import { DISABLE_DELIVERY_GATE_ENV_VAR } from '../artifacts/delivery.js'
 import { resolveProjectRoot } from '../state/paths.js'
@@ -77,7 +83,16 @@ export function captureTurnSnapshot(payload: HookPayload, options: TurnSnapshotO
 async function main(): Promise<void> {
   const payload = parseHookPayload(await readStdin())
   if (payload === null) return
-  captureTurnSnapshot(payload, { now: new Date().toISOString() })
+  const outcome = captureTurnSnapshot(payload, { now: new Date().toISOString() })
+  // O3: rule 2 says this hook is silent to the model; `error` marks the one case the baseline was
+  // wanted and could not be written, which the delivery gate will later stand down on (its rule 3).
+  appendHookLog({
+    hook: 'turn-snapshot',
+    event: 'UserPromptSubmit',
+    thread: outcome.threadId,
+    decision: outcome.threadId !== null && outcome.filePath === null ? 'error' : 'silent',
+    summary: `files=${outcome.scanned} truncated=${outcome.truncated}`,
+  })
 }
 
 const entry = process.argv[1]
