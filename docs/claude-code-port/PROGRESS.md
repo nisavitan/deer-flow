@@ -4,24 +4,29 @@ Central status doc. Updated at every milestone. Upstream basis: `0950924`. Branc
 
 User decisions in force (2026-08-01): TypeScript · install from fork/local only (no marketplace before parity + clean-env install) · provider-dependent skills = optional modules, disabled by default, capability detection · v1 summarization = native compaction + structured checkpoint summaries, delta documented, context-loss parity tests required.
 
-| Milestone | Status | Commit | Tests (exit code) | Known gaps | Next |
-|---|---|---|---|---|---|
-| Baseline | **done** | `dc7c7ab9` | Original anchor suite 532 passed (exit 0); extractor deterministic (byte-identical reruns) | Live-model baseline of original blocked by no-API-key constraint (baseline/README.md, 5 recorded skips) | — |
-| M1 foundation | **done** | `e2be20c2` | Headless smokes pass (PONG, hook log, deep-run stub) | stubs replaced in M3/M6 | — |
-| M2 state library | **done** | `98c4f34e` | 164 vitest tests, 115 baseline vectors consumed, 0 discrepancies (exit 0) | sessions.json/summary.json channels land in M8/M10 | — |
-| M3 lead prompt | **done** | `b909c403` | 0 unexplained diffs vs 3 golden renders; drift detection proven; 197 tests total (exit 0) | memory turn-context injection deferred to M9; clamps consolidated onto policy/caps.ts | — |
-| M4 skills | **done** | `cf8bec25` | 23/23 skills carried (16 regular + 7 optional gated); headless body-load smoke passed | root tests/skills still target original tree (parity test in M14) | — |
-| M5 tools/sandbox | in progress | — | — | — | — |
-| M6 subagents/deep-run | in progress | — | — | — | — |
-| M7 middleware hooks | pending | — | — | — | — |
-| M8 context/summarization | pending | — | — | — | — |
-| M9 memory | pending | — | — | — | — |
-| M10 checkpoints/resume | pending | — | — | — | — |
-| M11 errors/goal loop | pending | — | — | — | — |
-| M12 permissions | pending | — | — | — | — |
-| M13 artifacts | pending | — | — | — | — |
-| M14 parity suite | pending | — | — | — | — |
-| M15 packaging | pending | — | — | — | — |
-| M16 upstream sync | pending | — | — | — | — |
+| Milestone | Status | Commit | Tests (exit code) | Original components covered | Parity classification | New Claude-specific code | Known gaps | Next |
+|---|---|---|---|---|---|---|---|---|
+| Baseline | **done** | `dc7c7ab9` | Original anchor suite 532 passed (exit 0); extractor deterministic (byte-identical reruns) | n/a (extraction, no port code) | n/a | extract_vectors.py (55KB, throwaway tooling) | Live-model baseline of original blocked by no-API-key constraint (baseline/README.md, 5 recorded skips) | — |
+| M1 foundation | **done** | `e2be20c2` | Headless smokes pass (PONG, hook log, deep-run stub) | none (scaffolding) | n/a | plugin manifest, TS toolchain, stub skill/workflow/hook (all Claude-specific) | stubs replaced in M3/M6 | — |
+| M2 state library | **done** | `98c4f34e` | 164 vitest tests, 115 baseline vectors consumed, 0 discrepancies (exit 0) | thread_state.py reducers (delegations, skill_context, goal, promoted, artifacts, todos), subagent caps clamps, goal counters/breaker, run identity | **exact** (vector-equal): all reducers+clamps+counters; **approximate**: atomic-io rev CAS (replaces LangGraph channel versioning); **omitted**: merge_sandbox, merge_viewed_images (consumers designed out) | atomic-io.ts, paths.ts (state-file discipline — no original equivalent, replaces checkpointer plumbing) | sessions.json/summary.json channels land in M8/M10 | — |
+| M3 lead prompt | **done** | `b909c403` | 0 unexplained diffs vs 3 golden renders; drift detection proven; 197 tests total (exit 0) | prompt.py apply_prompt_template + all section builders, factory.py todo prompt | **exact**: section order/text (golden-equal); **approximate**: 18 whitelisted substitutions (tool names, paths, delegation mechanism phrasing); **omitted**: 5 declared uncovered branches (substitutions.ts) | SKILL.md composition layer, deep-run routing section | memory turn-context injection deferred to M9 | — |
+| M4 skills | **done** | `cf8bec25` | 23/23 skills carried (16 regular + 7 optional gated); headless body-load smoke passed | skills/public/** (all 23 packages) | **exact** (bodies verbatim): 14; **approximate** (paths/tool-names adapted): 9; **omitted**: none (provider-dependent = optional modules, not dropped) | capability-check gates (7), skills-optional README, install-skill.sh root-marker adaptation | root tests/skills still target original tree (parity test in M14) | — |
+| M5 tools/sandbox | **done** | (this commit) | 93 new env-scrub tests; 290 total (exit 0); allow+deny smokes pass | sandbox/env_policy.py (lists verbatim), sandbox/tools.py (mapping contract), present_file_tool.py (contract doc) | **exact**: scrub name lists/patterns; **approximate**: enforcement shape (command-refusal at PreToolUse vs child-env scrub — platform owns the spawn; stricter direction, sanctioned by S24); **approximate**: present_files → outputs/ contract (delivery enforcement weakened to prompt policy until M13 receipt check) | env-guard.ts hook, permissions-preset.json (23 deny rules), sandbox-contract.md | Bash literal-match deny rules evadable by obfuscation (closing = M7 audit classifier); delivery enforcement restored in M13 | adversarial-fixture gate |
+| M6 subagents/deep-run | in progress | — | — | — | — | — | — | — |
+| M7 middleware hooks | pending | — | — | — | — | — | — | — |
+| M8 context/summarization | pending | — | — | — | — | — | — | — |
+| M9 memory | pending | — | — | — | — | — | — | — |
+| M10 checkpoints/resume | pending | — | — | — | — | — | — | — |
+| M11 errors/goal loop | pending | — | — | — | — | — | — | — |
+| M12 permissions | pending | — | — | — | — | — | — | — |
+| M13 artifacts | pending | — | — | — | — | — | — | — |
+| M14 parity suite | pending | — | — | — | — | — | — | — |
+| M15 packaging | pending | — | — | — | — | — | — | — |
+| M16 upstream sync | pending | — | — | — | — | — | — | — |
+
+Additional rules (user directive 2026-08-01, second round):
+- Every milestone row reports three extra fields: original components covered · parity classification (exact / approximate / omitted / blocked) · new Claude-specific code added — so the final parity percentage cannot be inflated by many tests on small components.
+- **Adversarial-fixture gate before real-project use**: M5/M6 (and the hook chain from M7) must pass the deliberate failure fixture at `ports/claude-code/parity/fixtures/adversarial/` (crashing tool, hanging tool, subagent returning schema-invalid output, repository containing sensitive files) BEFORE being pointed at any real project. No early wiring to real kickoff code.
+- M14 behavioral comparison uses fixtures + structured, comparable outputs — never verbatim-model-output equality.
 
 Rules in force: separate commit per milestone; traceability-matrix.md updated with every replaced component; nothing marked "ported" without code + passing parity test; parity outcomes labeled exact / approximate / intentionally omitted / blocked; independent verifier after every significant milestone.

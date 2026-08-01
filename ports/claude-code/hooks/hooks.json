@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/dist/hooks/smoke.js"
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/dist/hooks/env-guard.js"
           }
         ]
       }

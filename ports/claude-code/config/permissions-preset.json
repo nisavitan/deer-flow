@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./**/.env)",
+      "Read(./**/.env.*)",
+      "Read(./secrets/**)",
+      "Read(./**/*.pem)",
+      "Read(./**/id_rsa*)",
+      "Read(~/.aws/credentials)",
+      "Read(~/.ssh/id_*)",
+      "Read(~/.claude/.credentials.json)",
+      "Bash(cat .env*)",
+      "Bash(cat ./.env*)",
+      "Bash(head .env*)",
+      "Bash(tail .env*)",
+      "Bash(less .env*)",
+      "Bash(more .env*)",
+      "Bash(strings .env*)",
+      "Bash(cat ~/.aws/credentials)",
+      "Bash(cat ~/.claude/.credentials.json)",
+      "Bash(cat ~/.ssh/id_*)",
+      "Bash(env)",
+      "Bash(printenv)",
+      "Bash(printenv *)"
+    ]
+  }
+}
