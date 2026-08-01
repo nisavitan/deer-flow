@@ -148,3 +148,89 @@ delegated to the runtime lifecycle.
 | **Port** | Claude Code has no metadata channel on an agent result. The same fields are computed by `makeSubagentAdditionalKwargs` and carried on the workflow's returned result object and the ledger entry. `subagent_model_name` and `subagent_token_usage` are currently never populated: the workflow runtime does not report per-agent model or usage to the script. |
 | **Blast radius** | Every model-visible fact survives (the original already folded status and caps into the text). Per-agent token accounting is lost at the ledger level; `budget.spent()` gives a workflow-wide figure only. |
 | **Verified** | `src/deeprun/result-format.test.ts` asserts the full `additional_kwargs` object for all 60 vectors, including the model-name and usage paths when supplied. |
+
+---
+
+## M8 — context & summarization
+
+Full row-by-row comparison: `docs/claude-code-port/summarization-delta.md`. The entries below are
+the ones with an observable consequence.
+
+### 1. Compaction trigger and keep policy — **blocked**
+
+| | |
+|---|---|
+| **Original** | `_prepare_compaction` counts tokens over `messages` **plus** a synthetic `HumanMessage(name="summary")` carrying the previous `summary_text`, then defers to the parent's `_should_summarize` / `_determine_cutoff_index`. `trigger` is configurable (tokens / messages / fraction-of-max, OR-combined); `keep` defaults to `("messages", 20)`. [summarization_middleware.py:458-481; config/summarization_config.py:36-53] |
+| **Port** | Claude Code auto-compacts at ~85% of the context window. No threshold, no OR-list, no fraction, no addressable keep window; the port never sees the token count, so the existing summary cannot weigh into the trigger either. |
+| **Blast radius** | A deployment cannot tune when compaction happens, and "the last 20 messages are always intact" is no longer a guarantee the port can make. |
+| **Mitigation** | The port depends on no message-shaped guarantee — everything it needs after compaction lives in state files. The `PreCompact` hook refreshes the durable digest at *every* boundary, wherever the platform puts it, and `/deerflow:compact` lets a user force a refresh. |
+| **Verified** | Absence, not a test. Hook behaviour at the boundary: `src/hooks/precompact-summary.test.ts`. |
+
+### 2. The compaction summary is not DeerFlow's — **degraded**
+
+| | |
+|---|---|
+| **Original** | `_create_summary` invokes an ordered candidate model (configured summary model → run model), with lazy guarded construction, cached construction failures, `TAG_NOSTREAM`, and blank-response-is-failure handling. The middleware owns the summary end to end. [summarization_middleware.py:127-212, 235-283] |
+| **Port** | The prose summary is produced by Claude Code's native compaction, which the port neither controls nor inspects. The port contributes a **deterministic digest** of durable state instead: recent user objectives, open todos, delegation status counts, artifacts, message count (`src/summary/digest.ts`). No model is called — a hook has no credentials and must not block the turn. |
+| **Blast radius** | Prose recall of the compacted conversation is platform behaviour and cannot be asserted equal to DeerFlow's. Anything that existed only as reasoning or intermediate tool output, and was never written to durable state, is not covered by the port's half. |
+| **Mitigation** | `src/summary/context-loss.ts` **measures** the actual recall (`items_total` / `items_recalled` / `lost_items` / `by_kind`) rather than asserting survival. M14 runs the probe; M8 owns the scorer so the number cannot drift. |
+| **Verified** | `src/summary/digest.test.ts` (determinism: two builds over the same state are byte-identical), `src/summary/context-loss.test.ts` (16 scoring vectors). |
+
+### 3. Summary-generation path is ported but unused — **intentionally omitted**
+
+| | |
+|---|---|
+| **Original** | `_build_summary_input_text` wraps the compaction window in `<existing_summary>` / `<new_messages>`, HTML-escaped (`quote=False`) against block breakout (#4162 / #4097), trim-then-escape, with the two `_CANNED_SUMMARIES` short-circuits; the whole thing is formatted into `summary_prompt`. |
+| **Port** | `src/summary/wrapper.ts:buildSummaryRequest` is a verbatim port of that wrapper, drift-tested against a frozen copy of lines 415-435. Nothing in M8 calls it: the hook must not invoke a model. Two consequences: (a) the *base* instruction is LangChain-inherited, not DeerFlow's, so it is **not vendored** — `PORT_SUMMARY_BASE_INSTRUCTION` is port-authored replacement text, labelled in the file header; (b) the canned `"Previous conversation was too long to summarize."` branch is preserved but **unreachable**, because the char-budget trimmer (the original's fallback path, the only one available without a token counter) never empties a non-empty input. |
+| **Blast radius** | None today. A future port path that does generate a summary inherits the exact wrapper and the exact escaping; only the wording of the base instruction differs from a DeerFlow deployment. |
+| **Verified** | `src/summary/wrapper.test.ts` — frozen-source token extraction, escaping/breakout tests, and an explicit assertion that the unreachable branch is retained. |
+
+### 4. Memory flush at the compaction boundary — **blocked (until M9)**
+
+| | |
+|---|---|
+| **Original** | `before_summarization` hooks fire once a replacement summary exists; the lead chain attaches `memory_flush_hook` (when `memory.enabled`) so pre-compaction messages reach durable memory. Subagents pass `skip_memory_flush=True` so their internal turns do not pollute the parent thread. [summarization_middleware.py:508-518, 625-647, 743-747] |
+| **Port** | Not implemented. The port's memory queue is M9. |
+| **Blast radius** | **A real loss window, open until M9:** information that existed only inside the compacted window is not written to durable memory. |
+| **Mitigation** | The `PreCompact` hook already runs at exactly the right instant, so M9 adds the enqueue call at that point and nothing else. |
+| **Verified** | Declared absence. |
+
+### 5. The port parses the session transcript — **degraded (defensive)**
+
+| | |
+|---|---|
+| **Original** | Reads `state["messages"]` directly; there is no transcript. |
+| **Port** | `src/summary/digest.ts:extractTranscriptTail` performs a defensive JSONL parse of the `transcript_path` supplied by the PreCompact payload, to recover recent user objectives and a message count. This deviates from `docs/claude-code-port/state-checkpoint-resume.md` §2.1, which records the transcript format as "internal/unstable — never parsed by the port". |
+| **Blast radius** | An upstream format change could silently stop objectives appearing in the digest. Nothing else in the port reads the transcript. |
+| **Mitigation** | Every level degrades: an unparseable line is skipped, an unexpected record shape is ignored, an unreadable file yields an empty tail — and the digest is still produced from state files alone. No downstream behaviour depends on a successful parse. |
+| **Verified** | `src/summary/digest.test.ts` (malformed lines, missing file, tool_result blocks ignored). |
+
+### 6. Durable-context projection uses one carrier, not two messages — **relocated**
+
+| | |
+|---|---|
+| **Original** | `DurableContextMiddleware._inject` inserts, after the leading SystemMessages, a `SystemMessage(_AUTHORITY_CONTRACT)` **plus** one hidden `HumanMessage` carrying `<durable_context_data>` — precisely so runtime values never reach system-role authority. [durable_context_middleware.py:249-271] |
+| **Port** | Claude Code exposes no per-model-call request rewrite. `src/summary/durable-context.ts` emits both halves as labelled sections of one string, for `UserPromptSubmit` `additionalContext` (M7 wires the injection). Order, texts, escaping and budgets are verbatim; `authorityContract` and `dataBlock` are exported separately so a future two-message carrier needs no re-derivation. |
+| **Blast radius** | The authority rules arrive with user-turn weight rather than system weight. |
+| **Mitigation** | The untrusted half stays fenced inside `<durable_context_data>` and is HTML-escaped, so a value cannot close its own block or forge a section. |
+| **Verified** | `src/summary/durable-context.test.ts` — verbatim authority contract, section order, ledger/skill rendering, and two breakout attempts (summary value and delegation result) that fail to close the block. |
+
+### 7. Manual compaction is two actions by two actors — **degraded**
+
+| | |
+|---|---|
+| **Original** | `POST /threads/{id}/compact` → `compact_thread_context`: forces compaction, generates a summary, and rewrites `messages` + `summary_text` in one mutation-graph checkpoint write under a `checkpoint_write` reservation. |
+| **Port** | `/deerflow:compact` runs `node dist/summary/digest-cli.js`, which rebuilds the durable digest only, then instructs the **user** to run native `/compact` — slash commands are not model-invocable, so a skill cannot compact the context itself. |
+| **Blast radius** | Invoking the port's compact skill does not shrink the context. |
+| **Mitigation** | The skill is explicitly forbidden from claiming otherwise and says so to the user; the durable half remains a single atomic write, as the original's was. |
+| **Verified** | `skills/compact/SKILL.md` ("What this is not"); CLI write path covered by `src/summary/summary-state.test.ts`. |
+
+### 8. `summary.json` carries fields the original channel did not — **relocated**
+
+| | |
+|---|---|
+| **Original** | `summary_text` is a bare-string LangGraph LastValue channel. |
+| **Port** | The file adds `updated_by` (`precompact` / `manual` / `deep-run`), `source_message_count`, `commit_sha`, the structured `digest`, and a `compactions` history bounded at 20, on top of the standard `{schema_version, rev, updated_at}` envelope. It also offers an optional port-authored `## Active goal` projection section, **off by default**. |
+| **Blast radius** | Additive only. A reader comparing the two finds extra provenance data. |
+| **Mitigation** | The ported LastValue rule governs `summary_text` unchanged — including `_nonempty_summary`'s "a blank summary is a generation failure", so a blank write preserves the previous text instead of clearing history. The goal section is default-off so the default rendering matches the original's format. |
+| **Verified** | `src/summary/summary-state.test.ts` (16 tests, incl. blank-preserve and CAS), `src/summary/durable-context.test.ts` (goal section default-off). |
