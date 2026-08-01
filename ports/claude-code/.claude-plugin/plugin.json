@@ -1,7 +1,7 @@
 {
   "name": "deerflow",
-  "description": "DeerFlow for Claude Code — faithful source port of the ByteDance DeerFlow agent harness (lead-agent policy, deterministic delegation engine, middleware guards, skills, memory) running natively on Claude Code.",
-  "version": "0.1.0-m1",
+  "description": "DeerFlow for Claude Code \u2014 faithful source port of the ByteDance DeerFlow agent harness (lead-agent policy, deterministic delegation engine, middleware guards, skills, memory) running natively on Claude Code.",
+  "version": "0.9.0-rc1",
   "author": {
     "name": "DeerFlow Claude Code port (from bytedance/deer-flow @ 0950924)"
   },
