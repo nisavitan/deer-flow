@@ -6,7 +6,7 @@
 - **Paths** are relative to `backend/packages/harness/deerflow/` unless prefixed.
 - **Evidence base:** `notes/lead-agent-and-state.md`, `notes/middlewares.md`, `notes/runtime-and-persistence.md`, `notes/subagents-and-tools.md`, `notes/skills-and-memory.md`, `notes/sandbox-config-models.md`, `notes/delivery-and-tests.md`; targets from `recommended-architecture.md`.
 - **Parity test** cells name the original engine-behavior test files (per `notes/delivery-and-tests.md` §5–6) that the port's parity suite must reproduce or consciously diverge from; no `parity-test-plan.md` exists yet.
-- **Status:** rows are `planned` / `needs-investigation` unless marked otherwise. A parenthesised qualifier after `implemented (M<n>)` names exactly which part of the row is done and what is still pending; `partial` means the row's own qualifier is the contract, not the headline. Two statuses were added at M14 to stop `planned` from meaning three different things: **`excluded (delivery)`** — a §11 subpackage that is out of scope by the matrix's own header, and **`platform-native (no port code; capability verified)`** — a row whose Port method is `replace with native Claude Code primitive` where the native behaviour is covered by `claude-code-capabilities.md` / `experiment-results.md` and there is nothing left to write. `planned` now means only what it says: port work someone still has to do. Recounted at M14 — **44 of 199 rows are implemented**, per milestone:
+- **Status:** rows are `planned` / `needs-investigation` unless marked otherwise. A parenthesised qualifier after `implemented (M<n>)` names exactly which part of the row is done and what is still pending; `partial` means the row's own qualifier is the contract, not the headline. Two statuses were added at M14 to stop `planned` from meaning three different things: **`excluded (delivery)`** — a §11 subpackage that is out of scope by the matrix's own header, and **`platform-native (no port code; capability verified)`** — a row whose Port method is `replace with native Claude Code primitive` where the native behaviour is covered by `claude-code-capabilities.md` / `experiment-results.md` and there is nothing left to write. `planned` now means only what it says: port work someone still has to do. Recounted at M14 — **45 of 199 rows are implemented**, per milestone:
 
   | M | Rows | What moved |
   |---|---:|---|
@@ -22,7 +22,7 @@
   | M11 | 1 | `runtime/goal.py` evaluation loop (§3) |
   | M13 | 4 | the four `workspace_changes/*` rows (§8) — plus the delivery-enforcement half of `tools/builtins/present_file_tool.py` (§5), which stays attributed to M5 above because that row was already implemented as a contract doc | · M14-fix 1
 
-  Also not `planned`: **7 partial** — `lead_agent/prompt.py` skills/memory section (§1); `dynamic_context_middleware.py`, `durable_context_middleware.py`, `tool_error_handling_middleware.py`, `terminal_response_middleware.py` (§2); `runtime/runs/manager.py` reconciliation half (§3); `config/loop_detection_config.py` (§10). **1 deferred** — `tool_progress_middleware.py` (§2), recorded as deferred, explicitly *not* intentionally omitted. **1 confirmed replace-with-native** — `runtime/checkpoint_mode.py` (§3), which keeps a port-side remnant (the `schema_version` fail-closed gate) and is therefore not the same status as the 44 below. **11 needs-investigation**, **4 omitted**, **9 excluded (delivery)** — the §11 groups — and **44 platform-native**. That leaves **78 genuinely-planned rows**. Full status table under "Summary counts"; the implementation-grounded parity percentages are in **`parity-report.md`**.
+  Also not `planned`: **7 partial** — `lead_agent/prompt.py` skills/memory section (§1); `dynamic_context_middleware.py`, `durable_context_middleware.py`, `tool_error_handling_middleware.py`, `terminal_response_middleware.py` (§2); `runtime/runs/manager.py` reconciliation half (§3); `config/loop_detection_config.py` (§10). **1 deferred** — `tool_progress_middleware.py` (§2), recorded as deferred, explicitly *not* intentionally omitted. **1 confirmed replace-with-native** — `runtime/checkpoint_mode.py` (§3), which keeps a port-side remnant (the `schema_version` fail-closed gate) and is therefore not the same status as the 45 below. **11 needs-investigation**, **4 omitted**, **9 excluded (delivery)** — the §11 groups — and **44 platform-native**. That leaves **77 genuinely-planned rows**. Full status table under "Summary counts"; the implementation-grounded parity percentages are in **`parity-report.md`**.
 
 Port method legend (exact set): reuse unchanged · reuse with import adaptation · mechanical TypeScript translation · structural translation · wrap with Claude Code primitive · replace with native Claude Code primitive · exclude as delivery infrastructure · blocked pending experiment.
 
@@ -322,7 +322,7 @@ Rows per port method:
 
 | Status | Rows | Share |
 |---|---:|---:|
-| implemented (M2–M13) | 44 | 22.1% |
+| implemented (M2–M14) | 45 | 22.6% |
 | partial | 7 | 3.5% |
 | deferred | 1 | 0.5% |
 | omitted / intentionally omitted | 4 | 2.0% |
@@ -330,12 +330,12 @@ Rows per port method:
 | platform-native (no port code; capability verified) | 44 | 22.1% |
 | excluded (delivery) | 9 | 4.5% |
 | needs-investigation | 11 | 5.5% |
-| planned | 78 | 39.2% |
+| planned | 77 | 38.7% |
 | **Total** | **199** | **100%** |
 
 The last three status labels were split out of `planned` at M14; before that the same 199 rows read `planned 131`. Nothing about any row's *content* changed — only its Status cell, and only where the cell disagreed with the row's own Port method or with §11's stated purpose.
 
-Implemented rows by the first milestone their Status cell cites: **M2** 6 · **M3** 3 · **M4** 2 · **M5** 9 · **M6** 6 · **M7** 3 · **M8** 2 · **M9** 7 · **M10** 1 · **M11** 1 · **M13** 4 = **44**.
+Implemented rows by the first milestone their Status cell cites: **M2** 6 · **M3** 3 · **M4** 2 · **M5** 9 · **M6** 6 · **M7** 3 · **M8** 2 · **M9** 7 · **M10** 1 · **M11** 1 · **M13** 4 · **M14-fix** 1 = **45**.
 
 The 11 `needs-investigation` rows are: skill secrets pipeline, MCP auto-promotion, token-budget accounting source, update_agent field preservation, ACP wrapping, skill_manage scan gate, slash reserved-name collisions, installer hardening, checkpoint_patches, OAuth bridge script, mcp result-path policy.
 

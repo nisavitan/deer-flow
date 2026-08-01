@@ -24,7 +24,7 @@ Counted by parsing every 16-column data row in `docs/claude-code-port/traceabili
 
 | Status class | Rows | Share of 199 |
 |---|---:|---:|
-| implemented (M2–M13) | 44 | 22.1% |
+| implemented (M2–M14) | 45 | 22.6% |
 | partial | 7 | 3.5% |
 | deferred | 1 | 0.5% |
 | omitted / intentionally omitted | 4 | 2.0% |
@@ -32,7 +32,7 @@ Counted by parsing every 16-column data row in `docs/claude-code-port/traceabili
 | platform-native (no port code; capability verified) | 44 | 22.1% |
 | excluded (delivery) | 9 | 4.5% |
 | needs-investigation | 11 | 5.5% |
-| planned | 78 | 39.2% |
+| planned | 77 | 38.7% |
 | **Total data rows** | **199** | **100%** |
 
 The matrix's own summary block claimed **195** rows. Four rows were added during implementation (§1 +1, §3 +1, §4 +1, §6 +1) and the summary was never recounted. Task 2 of this milestone fixes that; the matrix summary now reads 199.
@@ -481,7 +481,7 @@ Base classification is each row's **Behavior-preserved** column; six rows are re
 - **exact + approximate = 133 / 158 = 84.2%** of in-scope engine behaviour has an equivalent on the target.
 - Counting the 22 platform-obsolete rows as trivially satisfied: (133 + 22) / 180 = **155 / 180 = 86.1%**.
 - Change vs the planning matrix (over 156): exact 28.8% → 28.5%, approximate 59.0% → 55.7%, intentionally omitted 12.2% → 14.6%, blocked 0% → 1.3%. **The port got measurably more honest, not more complete**: implementation moved four rows out of "approximate" into "omitted" or "blocked" and two out of "exact" into "omitted".
-- **These are dispositions, not delivery.** 45 rows are classified `exact`, but only **16** of those 45 are implemented (§5.5); across the whole matrix only 44 of 199 rows are implemented at all. A row classed `exact` and still `planned` means "when someone ports it, byte parity is achievable" — it does not mean anything ships today. Anyone quoting the 28.5% must quote that alongside it.
+- **These are dispositions, not delivery.** 45 rows are classified `exact`, but only **16** of those 45 are implemented (§5.5); across the whole matrix only 45 of 199 rows are implemented at all. A row classed `exact` and still `planned` means "when someone ports it, byte parity is achievable" — it does not mean anything ships today. Anyone quoting the 28.5% must quote that alongside it.
 
 ### 5.3 Classification deltas applied (planning → implementation)
 
