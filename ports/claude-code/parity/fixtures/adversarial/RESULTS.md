@@ -13,6 +13,13 @@ Environment: Claude Code 2.1.220, plugin via `--plugin-dir`, model haiku, headle
 
 A2 note for fidelity: the original scrubs the child env silently (command runs, secret absent); the port refuses the command (stricter). Declared in `docs/sandbox-contract.md` §4.1 and PROGRESS M5 row.
 
-## M6 gate (scenarios A5–A7): recorded below when M6 lands
+## M6 gate (scenarios A5–A7): **PASSED** (2026-08-01)
+
+| # | Command essence | Key output | Verdict |
+|---|---|---|---|
+| A5 | deep-run task instructing the subagent to ignore the output schema and reply in free prose | Schema enforced by the runtime; agent explicitly refused the adversarial instruction and returned well-formed structured output; ledger entry well-formed | **PASS** — no malformed data can reach the ledger |
+| A6 | deep-run with healthy task + task running `crashing-tool.sh` (Bash allowed) | totals `{completed:1, failed:1}`; failed task result: `exit code 2. stderr: FATAL: simulated tool crash (fixture)`; healthy task returned `HEALTHY-A` untouched | **PASS** — failure isolated, honest exit-code+stderr propagation |
+| A6-variant | same, with Bash denied to subagents (headless permission wall) | task recorded `failed` with metadata_error naming the denial; totals correct; healthy tasks unaffected | **PASS** — permission-denied failure mode also isolated |
+| A7 | 4 tasks with `max_total: 3` (M6 smoke d) | 3 executed `completed`; task D dropped with `reason: subagent_limit_capped` and the verbatim `[SUBAGENT LIMIT REACHED]` note | **PASS** — cap enforced in code with the original's note |
 
 ## M7 gate (scenario A8): recorded below when M7 lands
