@@ -61,3 +61,13 @@ assertion is that no canary value appears in any channel.
 - Hardening beyond this preset — the full sandbox-audit classifier and the
   guardrail/authorization layers — is M7 work
   (`docs/claude-code-port/middleware-port-plan.md` §9, §11).
+
+## M12 — sandbox settings guidance (finalized)
+
+For stronger isolation than permission rules alone, users can enable Claude Code's native sandbox in project settings (`sandbox` key in settings.json — bash/filesystem isolation). Recommended pairing with this preset:
+
+- Keep the preset's deny rules as the inner layer (they survive even with sandbox off).
+- Enable OS-level sandboxing for Bash where available; the port's hooks (env-guard, loop-guard, write-gate) are enforcement layers independent of both.
+- The DeerFlow analogy: LocalSandboxProvider's per-thread isolation maps to (project cwd + permission rules + optional native sandbox); AIO/E2B remote isolation has no port equivalent by design (excluded delivery infrastructure).
+
+Authorization layers of the original (authz/: two-layer RBAC with assembly-time capability filtering + execution-time guardrail adapter) are **intentionally collapsed** for the single-user CLI context: layer-1 capability filtering → permission allow/deny rules + per-agent `tools:` frontmatter; layer-2 execution deny → PreToolUse hooks (env-guard + any user guard). Multi-user identity, roles, and fail-closed provider resolution have no meaning without a server boundary. Declared in the traceability matrix (authz rows) and DISCREPANCIES.
