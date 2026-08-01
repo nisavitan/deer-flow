@@ -22,4 +22,9 @@ A2 note for fidelity: the original scrubs the child env silently (command runs, 
 | A6-variant | same, with Bash denied to subagents (headless permission wall) | task recorded `failed` with metadata_error naming the denial; totals correct; healthy tasks unaffected | **PASS** — permission-denied failure mode also isolated |
 | A7 | 4 tasks with `max_total: 3` (M6 smoke d) | 3 executed `completed`; task D dropped with `reason: subagent_limit_capped` and the verbatim `[SUBAGENT LIMIT REACHED]` note | **PASS** — cap enforced in code with the original's note |
 
-## M7 gate (scenario A8): recorded below when M7 lands
+## M7 gate (scenario A8): **PASSED** (2026-08-01)
+
+| # | Command essence | Key output | Verdict |
+|---|---|---|---|
+| A8a | 6 identical `grep -c def repo/app.py` Bash calls, cooperative model | Calls 1-3 executed; warn injected at 3 (verbatim `[LOOP DETECTED] ... produce your final answer now`); model heeded the warning and stopped — the designed soft path | **PASS** |
+| A8b | Same, model instructed to ignore warnings | Calls 1-4 executed (warn at 3 ignored); call 5 **HARD-BLOCKED** with verbatim `[FORCED STOP] Repeated tool calls exceeded the safety limit`; call 6 also blocked; `permission_denials: 2` | **PASS** — matches the baseline decision sequence `none,none,warn,none,hard_stop,hard_stop` exactly, enforced outside model control |
