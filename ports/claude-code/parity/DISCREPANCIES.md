@@ -367,3 +367,125 @@ the ones with an observable consequence.
 | **Why** | tiktoken is a Python BPE library with no dependency-free TypeScript counterpart, and the port's `package.json` deliberately carries only `typescript` + `vitest`. Upstream already ships this exact mode. |
 | **Blast radius** | The budget is slightly conservative for English/code and slightly generous for some scripts, relative to real BPE. One second-order effect: because the budget is enforced against the **sum of per-line** estimates and the estimator floors twice per call, the estimate of the concatenated block can exceed the budget by at most `2 × (lines − 1)` — a couple of tokens on a 2000-token budget. Upstream has the identical property in `char` mode. |
 | **Verified** | `src/memory/injection.test.ts` pins the formula against an independent reimplementation, the per-line budget invariant, and the `2 × (lines − 1)` bound. |
+
+---
+
+## M7 — deterministic middleware hooks (loop detection, tool meta, read-before-write, turn context)
+
+### 1. Loop enforcement moves from `after_model` to a PreToolUse deny — **relocated**
+
+| | |
+|---|---|
+| **Original** | `LoopDetectionMiddleware._apply` runs in `after_model`, i.e. after the model has emitted its tool calls. A hard stop **rewrites that AIMessage**: `tool_calls=[]`, raw `tool_calls`/`function_call` stripped from `additional_kwargs`, `finish_reason` `"tool_calls"→"stop"`, and the `[FORCED STOP]` text appended to the content. Nothing raises; the agent is simply left with no calls to make and must answer from what it has. `_stop_reason[run_id] = "loop_capped"` is exposed through `consume_stop_reason`. [loop_detection_middleware.py:544-609] |
+| **Port** | `src/hooks/loop-guard.ts` runs at **PreToolUse** and returns `permissionDecision: "deny"` with the same verbatim `[FORCED STOP]` text. A hook cannot rewrite an assistant message, so the call is refused instead of erased; the model reads the refusal and terminates on its own. `loop_capped` is written to `.deerflow/state/<thread>/loop-detection.json` and, best-effort, to `run-meta.json`. |
+| **Blast radius** | The model sees a denial *result* where the original saw its own message silently shortened. It may narrate the denial. Termination is no longer guaranteed by construction — it depends on the model reacting to repeated refusals — but every further matching call is denied, so the loop cannot make progress either way. |
+| **Verified** | `src/hooks/loop-guard.test.ts` (allow ×2, warn at 3, allow at 4, deny at 5 and 6, `loop_capped` in both state files); live process smoke: five identical `Grep` payloads piped into the built hook produced exactly that sequence. The detector itself is exact — `src/middleware/loop-detection.test.ts` replays all 99 baseline steps. |
+
+### 2. Detection is stepped per tool call, not per model response — **degraded (more sensitive)**
+
+| | |
+|---|---|
+| **Original** | `_hash_tool_calls` hashes a whole response's tool-call set as one order-independent multiset, and the window advances once per response. Five identical *responses* trip the hard limit. |
+| **Port** | PreToolUse fires once per call and cannot see its siblings, so the machine is stepped once per call. A repeated single call is identical to the original. A repeated **batch** of N identical calls appends N hashes per response and trips at roughly `5/N` responses instead of 5. |
+| **Why it is the safe direction** | It fires sooner, never later; the guard cannot miss a loop it would previously have caught. The alternative — buffering calls to reconstruct a response boundary — has no reliable signal in the hook payload and would delay enforcement past the calls it is meant to stop. |
+| **Blast radius** | A model that legitimately issues the *same* call several times inside one response reaches the warning faster. Distinct calls are unaffected (different hashes), which is the overwhelmingly common parallel-dispatch shape. |
+| **Verified** | `src/middleware/loop-detection.test.ts` pins the per-step semantics against the baseline; `src/hooks/loop-guard.test.ts` pins the per-call walk. |
+
+### 3. Warnings are context, not a queued `HumanMessage`; the hook never emits `allow` — **relocated**
+
+| | |
+|---|---|
+| **Original** | A warning is queued and injected at the **next** model call as a trailing `HumanMessage(name="loop_warning")` — deferred precisely to keep `assistant tool_calls → tool_messages` pairing valid for OpenAI/Moonshot and to avoid Anthropic's mid-stream `SystemMessage` restriction. Deduped, capped at 4 per (thread, run), dropped at `after_agent`. [module docstring 18-38; 396-406, 672-713] |
+| **Port** | The warning is emitted at the call itself as `hookSpecificOutput.additionalContext` **plus** a top-level `systemMessage`. No deferral is needed (a hook does not assemble the request), so the whole pending-warning queue — cap, dedupe, per-run scoping, `before_agent`/`after_agent` clearing — is dropped as machinery with nothing left to solve. Warn-once-per-hash semantics, which are the *behaviour*, are kept in the state file. |
+| **Deliberate refusal** | On the warn path the hook emits **no `permissionDecision` at all**. Writing `permissionDecision: "allow"` would not merely permit the call — it bypasses the user's own permission rules for it. Where the original only queued text, the port refuses to escalate: it abstains from the decision and the normal permission flow runs untouched. |
+| **Blast radius** | Two carriers instead of one, and one turn earlier. `parity-test-plan.md` S10 already sanctions "hook systemMessage/additionalContext rather than a `loop_warning` HumanMessage". |
+| **Verified** | `src/middleware/hook-runtime.test.ts` ("NEVER emits permissionDecision \"allow\""); `src/hooks/loop-guard.test.ts`. |
+
+### 4. Claude Code tool calls are translated into DeerFlow tool calls before hashing — **relocated (required)**
+
+| | |
+|---|---|
+| **Original** | The key rules are keyed on DeerFlow tool names and argument names: `read_file`/`path`/`start_line`/`end_line`, `write_file`/`content`, `str_replace`/`old_str`/`new_str`, and the salient set `path, url, query, command, pattern, glob, cmd`. |
+| **Port** | `src/middleware/tool-adapter.ts` maps `Read→read_file` (`file_path`→`path`, `offset`/`limit`→`start_line`/`end_line = offset+limit-1`), `Write→write_file`, `Edit→str_replace`, `Bash→bash`, `Grep→grep`, `Glob→glob`, `WebFetch→web_fetch`, `WebSearch→web_search`; MCP tools pass through under their own names. |
+| **Why it is not optional** | Without it every rule silently disables itself: `Read` is not `read_file` so ranged reads stop bucketing, and `file_path` is not a salient field so the key falls back to full args and two reads of one file look unrelated. The failure would be invisible — no error, just a guard that never fires. |
+| **Blast radius** | The `offset+limit-1` conversion is an interpretation: DeerFlow's `read_file` took an inclusive range, Claude Code's `Read` takes a start plus a count. Off-by-one at a 200-line bucket edge is possible and harmless (it changes which bucket a read lands in, never whether the detector works). |
+| **Verified** | `src/middleware/tool-adapter.test.ts` asserts the mapping as **hash outcomes** (same-bucket reads collide, far reads do not, same-path different-content writes do not collide, non-salient Grep args are ignored). |
+
+### 5. The `deerflow_tool_meta` taxonomy becomes model-visible — **relocated**
+
+| | |
+|---|---|
+| **Original** | `normalize_tool_message` stamps the meta into `additional_kwargs["deerflow_tool_meta"]`. It is **invisible to the model**: its consumers are ToolProgressMiddleware's state machine and the subagent status contract. |
+| **Port** | `src/hooks/post-tool-meta.ts` emits the same five fields as JSON inside a `<deerflow_tool_meta tool="…">` fence in `additionalContext`, followed by one line of guidance for the `recommended_next_action`. The classification is byte-exact against all 38 + 4 baseline vectors; the **envelope and the guidance sentences are port-authored**, because there is no original wording to be verbatim about. |
+| **Why** | The port has no message-metadata channel, and in M7 no ToolProgress state machine either. The only consumer that exists is the model, so an enum it cannot read is worth nothing. |
+| **Blast radius** | The model now reads framework classification text after a failed tool call — new input the original never produced. Bounded by emitting **only** on `error`/`partial_success` (success is silent), so a clean session pays nothing. |
+| **Verified** | `src/middleware/tool-meta.test.ts` (42/42 baseline vectors exact); `src/hooks/post-tool-meta.test.ts` (envelope, guidance, silence on success). |
+
+### 6. Tool-output externalization is platform-native; only a soft warning survives — **intentionally omitted**
+
+| | |
+|---|---|
+| **Original** | `ToolOutputBudgetMiddleware` externalizes results ≥12k chars to a file with a typed synopsis, falling back to head/tail truncation at 30k. |
+| **Port** | Not re-implemented. Claude Code already truncates and externalizes large tool outputs itself, and a hook that wrote a second copy to `outputs/.tool-results/` would fight the platform for the same job while doubling the bytes on disk. What M7 keeps is the *signal*: `post-tool-meta.ts` appends one line when a result exceeds 20,000 characters, telling the model to narrow the next call instead of re-issuing it. |
+| **Blast radius** | The synopsis format and the exact 12k/30k thresholds are not reproduced; the row for `tool_output_budget_middleware.py` stays `planned` for whoever wants byte parity. The behaviour that mattered — an oversized result does not silently consume the context — is native plus this note. |
+| **Verified** | `src/hooks/post-tool-meta.test.ts` (warns above the budget, silent exactly at it, combines with a classification). |
+
+### 7. Read marks move from the message list to a state file — **degraded**
+
+| | |
+|---|---|
+| **Original** | The sha256 mark lives on the `read_file` ToolMessage's `additional_kwargs` and the gate scans `state["messages"]` in reverse. This gives a property the file cannot: "summarization deleting the read result deletes the mark with it — the gate can never pass while the read content is gone from context." [read_before_write_middleware.py:12-16] |
+| **Port** | Marks live in `.deerflow/state/<thread>/read-marks.json`, because a hook cannot write to the transcript. A mark therefore **outlives** the Read result in context: after a compaction the gate may pass on a file the model can no longer see. |
+| **Why it is acceptable** | The hash still proves the file has not CHANGED since it was read, which is the property #3857 was filed for — the bug was an append loop (five copies of one section written after a single read), not a forgotten read. And Claude Code's own native rule ("you must Read the file in this conversation before editing") independently covers the in-context half, so the two enforcements together are strictly stronger than either. |
+| **Additional deltas** | (a) the per-`(scope, path)` `threading.Lock` that serialized gate-check with execution is gone — hooks are separate processes; the residual race resolves toward *denying* (a mark for content the model was not shown fails to match). (b) the mark list needs its own bound, since it is no longer bounded by the message window: 200 paths, oldest-first eviction, which can only ever cause an extra re-read. |
+| **Verified** | `src/middleware/read-marks.test.ts` (newest-mark-must-match, writes-never-refresh, creation allows, fail-open, normalization, cap eviction); `src/hooks/write-gate.test.ts` (the full Read→Edit→write→deny→Read→allow handshake). |
+
+### 8. The block message names `Read`, not `read_file` — **relocated**
+
+| | |
+|---|---|
+| **Original** | `_BLOCK_MESSAGE` ends "Call read_file on it (a ranged read of the relevant section is enough…)". |
+| **Port** | The hook passes `"Read"`, producing "Call Read on it (…)". Everything else in the message, including the leading `"Error: "` and the em-dash, is verbatim. |
+| **Why** | Instructing a Claude Code model to call `read_file` names a tool that does not exist. This is exactly the DeerFlow-name → native-name substitution the port already whitelists for the lead prompt in M3 (`src/prompts/substitutions.ts`). `blockMessage()` still **defaults** to `read_file`, so the module remains verbatim-capable for any consumer that wants the original string. |
+| **Blast radius** | One token in one model-facing sentence. |
+| **Verified** | `src/hooks/write-gate.test.ts` ("names the NATIVE read tool in the deny message, not read_file"). |
+
+### 9. The read-before-write hook duplicates a native rule, against the port plan's own judgment — **declared decision**
+
+| | |
+|---|---|
+| **The conflict** | `docs/claude-code-port/middleware-port-plan.md` §12 concludes: "A PreToolUse hash-check hook could tighten freshness further but would **duplicate native behavior — not planned**." The traceability-matrix row for the same middleware plans the opposite: "pre-tool-guard hook + native Read-before-Write … double enforcement acceptable, fail-open kept." |
+| **What M7 did** | Followed the matrix and built the hook, with an escape hatch (`DEERFLOW_DISABLE_READ_GATE=1`) so a deployment that agrees with the port plan can turn it off without a code change. |
+| **The deciding argument** | The two rules test different things. Native: *was this file read in this conversation.* Ported: *does the newest read mark equal the file's current sha256.* Only the second detects that the file MOVED between two writes, which is the failure #3857 describes. The hook can only ever refuse a subset of what a blind write would be, so composing them costs nothing but a denied call the native rule would also have wanted to deny. |
+| **Blast radius** | An extra denial path on `Write`/`Edit`. Fail-open on every uncertainty (missing file, unreadable file, no thread id, unreadable mark store). |
+| **Verified** | `src/hooks/write-gate.test.ts`, including the escape hatch disabling both halves together. |
+
+### 10. Turn context is injected every turn, not once per conversation — **degraded**
+
+| | |
+|---|---|
+| **Original** | `DynamicContextMiddleware._inject` injects the reminder **once**, into the first genuine `HumanMessage`, via the ID-swap triplet, and then never again — "the first message is then frozen for the whole session, so the prefix cache can hit on every subsequent turn". It re-injects only when `_last_injected_date` differs from today (midnight crossing). |
+| **Port** | `src/hooks/turn-context.ts` emits the date reminder (and the durable projection when state exists) on **every** `UserPromptSubmit`. A hook has no way to read what a previous turn injected — `additionalContext` does not persist into a place the next invocation can inspect. |
+| **Blast radius** | Repeated tokens each turn, and the prefix-cache argument that motivated the freeze does not apply here (the port does not assemble the request). In exchange, the midnight crossing is handled for free and post-compaction context loss — the entire reason the durable projection exists — is repaired every turn instead of once. |
+| **Also different** | The ID-swap triplet is impossible: the date arrives as user-turn context rather than a `SystemMessage`, i.e. without system-role authority (this is the same carrier change M8 recorded for the durable projection, §M8 entry 6, and the untrusted half stays fenced and escaped inside `<durable_context_data>`). The `context:memory` run-journal record is not produced. |
+| **Verified** | `src/hooks/turn-context.test.ts` (verbatim reminder format, date-only with no state, projection appended once state exists, date still injected when the state tree is unreadable). |
+
+### 11. The delegation ledger is committed by a CLI, not by the graph write — **relocated**
+
+| | |
+|---|---|
+| **Original** | `delegation_ledger.py` DERIVES the ledger from message history inside the graph's own state write: a `task` tool call becomes `in_progress`, the paired ToolMessage upgrades it to terminal. |
+| **Port** | `workflows/deep-run.js` emits ledger-shaped entries with `created_at: null` and `result_sha256: null` (a workflow script has no clock and no hash function), and `src/deeprun/ledger-cli.ts` — piped the workflow's JSON result — validates them, stamps both fields, and commits them through the same `mergeDelegations` reducer under atomic-write + `rev` CAS. |
+| **Blast radius** | **The commit is a separate, skippable step.** A deep run whose result is never piped into the CLI leaves no ledger entry, and the next turn sees a run that appears never to have delegated. Mitigated by an explicit instruction in `skills/run/SKILL.md` ("After a deep-run completes"), by the CLI being idempotent (re-running keeps the first-seen `created_at` and adds no duplicates), and by it exiting 1 without writing on invalid input. |
+| **Also different** | The CLI reflects a run-level `stop_reason` onto `run-meta.json` but never changes the run's STATUS: a deep run is one delegation batch inside a lead run, and marking it `completed` would trip the terminal guard on the lead's own finalize. |
+| **Verified** | `src/deeprun/ledger-cli.test.ts` (13 tests: digest of the full result rather than the bounded brief, idempotence, run-id mismatch left alone, no run record still persists, validation reports every bad entry at once); live: a deep-run result piped into the built CLI wrote the ledger and printed one summary line, and a malformed one exited 1 having written nothing. |
+
+### 12. ToolProgressMiddleware is deferred, not omitted — **declared absence**
+
+| | |
+|---|---|
+| **Original** | `ToolProgressMiddleware` (lead slot 13) runs a per-`(thread, tool)` stagnation state machine: 3 consecutive problems → WARNED + `[PROGRESS HINT]`, +2 more → BLOCKED when not model-recoverable, auth/config/internal `stop` classes → BLOCKED immediately, Jaccard ≥0.8 near-duplicates count as problems. `tool_progress.enabled` defaults **False**. |
+| **Port** | Not implemented in M7. |
+| **Honest status** | This is a **deferral, not an omission.** `middleware-port-plan.md` §13 rates deterministic parity as *possible* ("all classification is rule-based; delivery differs") and merely low priority because the feature ships off. The baseline skipped its vectors (G2) for a different reason — driving it needs a live tool handler and a real `Runtime`. Its one hard dependency, the `deerflow_tool_meta` taxonomy, now exists in `src/middleware/tool-meta.ts`, so a later milestone inherits the classifier and needs only the state machine and the two hook branches. |
+| **Blast radius** | None against the original's defaults: a stock DeerFlow deployment does not run this middleware either. A deployment that enabled it loses per-tool stagnation blocking; the loop detector still catches identical-call and per-tool-frequency loops. |
+| **Verified** | Declared absence, recorded in the traceability matrix row as `deferred (not in M7)`. |

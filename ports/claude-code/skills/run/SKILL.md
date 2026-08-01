@@ -193,3 +193,29 @@ the conversation explicitly shows it.
 - Language Consistency: Keep using the same language as user's
 - Always Respond: Your thinking is internal. You MUST always provide a visible response to the user after thinking.
 </critical_reminders>
+
+## After a deep-run completes (port mechanics)
+
+<!-- NOT a generated block. M7 addition; src/prompts/skills.test.ts pins the generated
+     blocks above and does not own this section. -->
+
+The `deerflow:deep-run` workflow returns its result as JSON but cannot persist
+anything itself: a workflow script has no clock, no hash function and no access
+to `.deerflow/state/`. So its delegation ledger is only ledger-*shaped* until you
+commit it. When a deep run finishes, pipe its JSON result through the ledger CLI:
+
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/dist/deeprun/ledger-cli.js --thread <thread-id> < <result.json>
+```
+
+`--thread` may be omitted when `DEERFLOW_THREAD_ID` is set. The CLI validates
+`ledger_entries`, stamps `created_at` and the sha256 of each full result, appends
+them to `.deerflow/state/<thread>/delegations.json` under the ledger's own merge
+rules (same id updates in place, a terminal status is never downgraded, 50-entry
+cap), reflects a run-level `stop_reason` onto `run-meta.json`, and prints one
+summary line. It exits 1 and writes nothing on invalid input.
+
+Skipping this step is not cosmetic: the delegation ledger is what the
+`turn-context` hook re-injects after a compaction, and what the per-run
+delegation budget counts. An unpersisted run looks to the next turn like a run
+that never delegated.

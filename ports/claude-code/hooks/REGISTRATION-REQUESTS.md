@@ -214,3 +214,163 @@ after 2 consecutive turns whose latest visible assistant text is unchanged; (c)
 the counter is not advancing (a failing write), so the hook stands down instead of blocking again.
 Pinned by `src/goal-loop/stop-hook.test.ts` ("the loop terminates at the cap…", 50 iterations,
 exactly 8 blocks).
+
+---
+
+## M7 — deterministic middleware hooks (five entries)
+
+**Status:** requested (not applied)
+
+Appended after M8-M11 because this file is ordered by *request time*, not by milestone number.
+All five hooks below are independent of the requests above: they share no state file with
+`precompact-summary.js`, `memory-extract.js`, `session-recover.js`, or `stop-goal-evaluator.js`,
+and none of them can emit `{"decision":"block"}`.
+
+**Requested entries** (add alongside the existing blocks; the `PreToolUse` array already holds the
+M5 `Bash` env-guard block, which must be preserved):
+
+```json
+"PreToolUse": [
+  {
+    "matcher": "Bash|Edit|Write|Read|Glob|Grep|WebFetch|WebSearch|mcp__.*",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "node ${CLAUDE_PLUGIN_ROOT}/dist/hooks/loop-guard.js"
+      }
+    ]
+  },
+  {
+    "matcher": "Write|Edit",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "node ${CLAUDE_PLUGIN_ROOT}/dist/hooks/write-gate.js"
+      }
+    ]
+  }
+],
+"PostToolUse": [
+  {
+    "matcher": "Bash|Edit|Write|Read|Glob|Grep|WebFetch|WebSearch|mcp__.*",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "node ${CLAUDE_PLUGIN_ROOT}/dist/hooks/post-tool-meta.js"
+      }
+    ]
+  },
+  {
+    "matcher": "Read",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "node ${CLAUDE_PLUGIN_ROOT}/dist/hooks/read-mark.js"
+      }
+    ]
+  }
+],
+"UserPromptSubmit": [
+  {
+    "matcher": "*",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "node ${CLAUDE_PLUGIN_ROOT}/dist/hooks/turn-context.js"
+      }
+    ]
+  }
+]
+```
+
+### 1. `PreToolUse` / `Bash|Edit|Write|Read|Glob|Grep|WebFetch|WebSearch|mcp__.*` → `loop-guard.js`
+
+- **Ports:** `LoopDetectionMiddleware` (lead slot 29, `loop_detection.enabled` default True).
+- **Matcher rationale:** the tools that perform *work*. The harness control surface
+  (`Agent`/`Task`, `TaskCreate`, `AskUserQuestion`, `Skill`, `Workflow`) is deliberately excluded —
+  denying one would break the port's own delegation machinery, and orchestration calls are not the
+  repetitive work loops the detector exists to break. The hook re-applies the same filter internally
+  (`isGuardedToolName`), so a looser matcher in `hooks.json` cannot widen its scope.
+- **Ordering:** none required. Sole writer of `.deerflow/state/<thread>/loop-detection.json`.
+- **Stdout protocol:** `permissionDecision: "deny"` carrying the verbatim `[FORCED STOP]` text at
+  the hard limit; `additionalContext` + `systemMessage` carrying the verbatim `[LOOP DETECTED]`
+  text at the warn threshold. **It never emits `permissionDecision: "allow"`** — allowing would
+  bypass the user's own permission rules, so on the warn path the hook abstains from the decision
+  entirely and the normal permission flow runs.
+- **Writes:** `loop-detection.json` (always), and best-effort `run-meta.json`
+  `stop_reason: loop_capped` on a hard stop. Both through the atomic-write + `rev`-CAS library.
+- **Failure mode:** exits 0 unconditionally and fails **open** — an unwritable or contended state
+  file, an unresolvable thread id, or any internal fault means no decision, never a blocked call.
+- **Escape hatch:** `DEERFLOW_DISABLE_LOOP_GUARD=1`.
+- **Build dependency:** `dist/hooks/loop-guard.js`.
+
+### 2. `PreToolUse` / `Write|Edit` → `write-gate.js`
+
+- **Ports:** the gate half of `ReadBeforeWriteMiddleware` (lead slot 12,
+  `read_before_write.enabled` default True).
+- **Matcher rationale:** exactly the two file-modifying tools, matching the original's
+  `_GATED_WRITE_TOOLS = {write_file, str_replace}`.
+- **Ordering:** none required against `loop-guard.js` — different state files, and either may deny
+  first without changing the outcome (both refusals are correct on their own grounds).
+- **Stdout protocol:** `permissionDecision: "deny"` with the ported `_BLOCK_MESSAGE`, or silence.
+- **Writes:** none. Read-only over `read-marks.json`.
+- **Failure mode:** exits 0 and fails **open** — a file that does not exist (creation), one that
+  cannot be read, an unreadable mark store, or a payload with no `file_path` all allow the write.
+- **Escape hatch:** `DEERFLOW_DISABLE_READ_GATE=1` (disables entry 4 as well; one flag governs both
+  halves, as the single config toggle did).
+- **Interaction with the platform:** Claude Code natively refuses to Edit/Write a file not Read in
+  the conversation. This hook enforces the same invariant on different evidence (content hash vs
+  conversation membership) and only ever refuses a subset of what a blind write would be, so the
+  two compose without conflict.
+- **Build dependency:** `dist/hooks/write-gate.js`.
+
+### 3. `PostToolUse` / `Bash|Edit|Write|Read|Glob|Grep|WebFetch|WebSearch|mcp__.*` → `post-tool-meta.js`
+
+- **Ports:** the `deerflow_tool_meta` taxonomy from `tool_result_meta.py` (lead slot 14).
+- **Matcher rationale:** identical to entry 1, for the same reason.
+- **Ordering:** none required. Writes nothing.
+- **Stdout protocol:** `additionalContext` carrying the `deerflow_tool_meta` JSON plus the
+  `recommended_next_action` guidance — emitted **only** for an `error`/`partial_success`
+  classification or a result above the 20,000-character budget. Silent on the happy path, so a
+  clean session pays nothing.
+- **Failure mode:** exits 0 unconditionally; a classifier fault never disturbs a result that
+  already succeeded.
+- **Escape hatch:** `DEERFLOW_DISABLE_TOOL_META=1`.
+- **Build dependency:** `dist/hooks/post-tool-meta.js`.
+
+### 4. `PostToolUse` / `Read` → `read-mark.js`
+
+- **Ports:** the mark-stamping half of `ReadBeforeWriteMiddleware` (`_attach_read_mark`).
+- **Matcher rationale:** `Read` only, matching `_READ_TOOLS = {read_file}`.
+- **Ordering:** must be a `PostToolUse` hook, not `PreToolUse` — the mark has to hash the file at
+  the instant the model was shown it, exactly as the original stamped *after* the read handler
+  returned. No ordering constraint against entry 3 (different files, and entry 3 writes nothing).
+- **Stdout protocol:** none. This hook has no decision to make and tells the model nothing.
+- **Writes:** `.deerflow/state/<thread>/read-marks.json` (one mark per path, cap 200, oldest-first
+  eviction) through the atomic-write + `rev`-CAS library.
+- **Failure mode:** exits 0 unconditionally. A missing mark costs one extra Read; it never blocks.
+- **Escape hatch:** `DEERFLOW_DISABLE_READ_GATE=1` (same flag as entry 2, on purpose).
+- **Build dependency:** `dist/hooks/read-mark.js`.
+
+### 5. `UserPromptSubmit` / `*` → `turn-context.js`
+
+- **Ports:** `DynamicContextMiddleware`'s date reminder (lead slot 15) and
+  `DurableContextMiddleware`'s projection (lead slot 18, rendered by `src/summary/durable-context.ts`).
+- **Matcher rationale:** `UserPromptSubmit` has no tool to match on; every prompt gets the current
+  date and, when the thread has durable state, the ledger/summary/skill projection.
+- **Ordering:** none required. Read-only over `summary.json`, `delegations.json`,
+  `skill-context.json`, and `goal.json`.
+- **Stdout protocol:** `hookSpecificOutput.additionalContext` only. **It never blocks a prompt.**
+- **Writes:** none.
+- **Failure mode:** exits 0 unconditionally. An unreadable state tree still yields the date
+  reminder; a total fault yields no injection and the turn proceeds.
+- **Escape hatch:** `DEERFLOW_DISABLE_TURN_CONTEXT=1`.
+- **Not included — memory injection.** The `<memory>` block belongs to the M9 memory lane
+  (`src/memory/injection.ts`) and is deliberately absent from this hook. If that lane adds its own
+  `UserPromptSubmit` entry, both may be registered: they emit independent `additionalContext`
+  strings and share no file.
+- **Build dependency:** `dist/hooks/turn-context.js`.
+
+**Cost note for the owning lane:** entries 1-4 run once per matched tool call and entry 5 once per
+turn. All five are short-lived Node processes that read at most a handful of small JSON files; none
+calls a model, spawns a process, or touches the network.
