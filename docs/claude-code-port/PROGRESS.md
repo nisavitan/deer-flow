@@ -6,13 +6,13 @@ User decisions in force (2026-08-01): TypeScript · install from fork/local only
 
 | Milestone | Status | Commit | Tests (exit code) | Known gaps | Next |
 |---|---|---|---|---|---|
-| Baseline | in progress | — | Original anchor suite: 532 passed (247+285, exit 0). Vector extraction running. | Live-model baseline of original blocked by no-API-key constraint (documented in baseline/README.md) | Commit vectors |
-| M1 foundation | implemented, pending commit | — | Smoke: `/deerflow:run ping` → `DEERFLOW-M1-PONG` (exit 0); compiled hook fired (`.deerflow/m1-smoke.log`: `PRE Bash`); plugin deep-run stub → `DEEP-RUN-M1-OK` | run skill + deep-run are declared stubs (replaced M3/M6) | Commit after baseline |
-| M2 state library | pending | — | — | — | — |
-| M3 lead prompt | pending | — | — | — | — |
-| M4 skills | pending | — | — | — | — |
-| M5 tools/sandbox | pending | — | — | — | — |
-| M6 subagents/deep-run | pending | — | — | — | — |
+| Baseline | **done** | `dc7c7ab9` | Original anchor suite 532 passed (exit 0); extractor deterministic (byte-identical reruns) | Live-model baseline of original blocked by no-API-key constraint (baseline/README.md, 5 recorded skips) | — |
+| M1 foundation | **done** | `e2be20c2` | Headless smokes pass (PONG, hook log, deep-run stub) | stubs replaced in M3/M6 | — |
+| M2 state library | **done** | `98c4f34e` | 164 vitest tests, 115 baseline vectors consumed, 0 discrepancies (exit 0) | sessions.json/summary.json channels land in M8/M10 | — |
+| M3 lead prompt | **done** | `b909c403` | 0 unexplained diffs vs 3 golden renders; drift detection proven; 197 tests total (exit 0) | memory turn-context injection deferred to M9; clamps consolidated onto policy/caps.ts | — |
+| M4 skills | **done** | `cf8bec25` | 23/23 skills carried (16 regular + 7 optional gated); headless body-load smoke passed | root tests/skills still target original tree (parity test in M14) | — |
+| M5 tools/sandbox | in progress | — | — | — | — |
+| M6 subagents/deep-run | in progress | — | — | — | — |
 | M7 middleware hooks | pending | — | — | — | — |
 | M8 context/summarization | pending | — | — | — | — |
 | M9 memory | pending | — | — | — | — |
